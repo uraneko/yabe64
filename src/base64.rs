@@ -1,4 +1,7 @@
-use crate::{BASE64_PAD as PAD, BASE64_TABLE as TABLE};
+use crate::{Base, PAD, char_from_idx};
+
+const BASE64: Base = Base::_64;
+const BASE64URL: Base = Base::_64URL;
 
 /// DOCS
 /// last 3 octets
@@ -15,7 +18,7 @@ use crate::{BASE64_PAD as PAD, BASE64_TABLE as TABLE};
 ///     one "=" padding character.
 
 /// separates the input string into chunks of 24bits
-pub fn into_24bits_chunks<T>(data: T) -> Vec<u32>
+fn into_24bits_chunks<T>(data: T) -> Vec<u32>
 where
     T: AsRef<str> + Into<String>,
 {
@@ -51,7 +54,7 @@ where
     bytes
 }
 
-pub fn into_6bits_bytes(bytes: Vec<u32>) -> Vec<u8> {
+fn into_6bits_bytes(bytes: Vec<u32>) -> Vec<u8> {
     let bytes = bytes.into_iter();
     // let mut last = bytes.next_back().unwrap();
 
@@ -68,18 +71,53 @@ pub fn into_6bits_bytes(bytes: Vec<u32>) -> Vec<u8> {
         .collect()
 }
 
-pub fn into_base64(bytes: Vec<u8>) -> String {
+fn into_base64(bytes: Vec<u8>) -> String {
     let mut bytes = bytes.into_iter();
     let [last, before_last] = [bytes.next_back(), bytes.next_back()];
 
-    let mut encoded = bytes.map(|b| *TABLE.get(&b).unwrap()).collect::<String>();
+    // FIXME the table needs to have all values
+    let mut encoded = bytes.map(|b| char_from_idx(b, BASE64)).collect::<String>();
 
     match [before_last, last] {
         [Some(0), Some(0)] => encoded.extend([PAD, PAD]),
-        [Some(b0), Some(0)] => encoded.extend([TABLE.get(&b0).unwrap(), &PAD]),
-        [Some(b0), None] => encoded.push(*TABLE.get(&b0).unwrap()),
-        [Some(0), Some(b1)] => encoded.extend([TABLE.get(&0).unwrap(), TABLE.get(&b1).unwrap()]),
-        [Some(b0), Some(b1)] => encoded.extend([TABLE.get(&b0).unwrap(), TABLE.get(&b1).unwrap()]),
+        [Some(b0), Some(0)] => encoded.extend([char_from_idx(b0, BASE64), PAD]),
+        [Some(b0), None] => encoded.push(char_from_idx(b0, BASE64)),
+        [Some(0), Some(b1)] => {
+            encoded.extend([char_from_idx(0, BASE64), char_from_idx(b1, BASE64)])
+        }
+        [Some(b0), Some(b1)] => {
+            encoded.extend([char_from_idx(b0, BASE64), char_from_idx(b1, BASE64)])
+        }
+        [None, None] => unreachable!("empty vector quit is much earlier"),
+        [None, Some(_)] => unreachable!("cant find more data after the end"),
+    }
+
+    // if encoded.ends_with("AA") {
+    // } else if encoded.ends_with('A') {
+    // }
+
+    encoded
+}
+
+fn into_base64_url(bytes: Vec<u8>) -> String {
+    let mut bytes = bytes.into_iter();
+    let [last, before_last] = [bytes.next_back(), bytes.next_back()];
+
+    // FIXME the table needs to have all values
+    let mut encoded = bytes
+        .map(|b| char_from_idx(b, BASE64URL))
+        .collect::<String>();
+
+    match [before_last, last] {
+        [Some(0), Some(0)] => encoded.extend([PAD, PAD]),
+        [Some(b0), Some(0)] => encoded.extend([char_from_idx(b0, BASE64URL), PAD]),
+        [Some(b0), None] => encoded.push(char_from_idx(b0, BASE64URL)),
+        [Some(0), Some(b1)] => {
+            encoded.extend([char_from_idx(0, BASE64URL), char_from_idx(b1, BASE64URL)])
+        }
+        [Some(b0), Some(b1)] => {
+            encoded.extend([char_from_idx(b0, BASE64URL), char_from_idx(b1, BASE64URL)])
+        }
         [None, None] => unreachable!("empty vector quit is much earlier"),
         [None, Some(_)] => unreachable!("cant find more data after the end"),
     }
@@ -104,4 +142,19 @@ where
     let bytes = into_6bits_bytes(chunks);
 
     into_base64(bytes)
+}
+
+pub fn base64_url_encode<T>(value: T) -> String
+where
+    T: AsRef<str> + Into<String>,
+{
+    let value = value.as_ref();
+    if value.is_empty() {
+        return "".into();
+    }
+
+    let chunks = into_24bits_chunks(value);
+    let bytes = into_6bits_bytes(chunks);
+
+    into_base64_url(bytes)
 }
