@@ -1,7 +1,11 @@
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-pub(crate) const BASE64_TABLE: LazyLock<HashMap<u8, char>> = LazyLock::new(|| {
+pub mod base64;
+
+pub use base64::base64_encode;
+
+pub const BASE64_TABLE: LazyLock<HashMap<u8, char>> = LazyLock::new(|| {
     HashMap::from([
         (0, 'A'),
         (1, 'B'),
@@ -75,4 +79,4 @@ pub(crate) const BASE64_TABLE: LazyLock<HashMap<u8, char>> = LazyLock::new(|| {
         // (63, '_')
     ])
 });
-pub(crate) const BASE64_PAD: char = '=';
+pub const BASE64_PAD: char = '=';

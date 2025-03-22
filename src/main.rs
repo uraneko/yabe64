@@ -1,8 +1,3 @@
-pub mod base64;
-pub(crate) mod root;
-
-pub use base64::base64_encode;
-
 use std::io::BufReader;
 use std::io::{Read, stdin};
 
@@ -13,5 +8,5 @@ fn main() {
         return;
     }
 
-    println!("{}", base64_encode(data));
+    println!("{}", yabe64::base64_encode(data));
 }

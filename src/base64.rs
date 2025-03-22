@@ -1,4 +1,4 @@
-use crate::root::{BASE64_PAD as PAD, BASE64_TABLE as TABLE};
+use crate::{BASE64_PAD as PAD, BASE64_TABLE as TABLE};
 
 /// DOCS
 /// last 3 octets
@@ -20,9 +20,6 @@ where
     T: AsRef<str> + Into<String>,
 {
     let data = data.as_ref();
-    if data.is_empty() {
-        return vec![];
-    }
     let mut bytes = data.as_bytes().chunks(3);
     // println!("{:?}", bytes.clone().collect::<Vec<&[u8]>>());
     let last = bytes.next_back().unwrap();
@@ -98,6 +95,11 @@ pub fn base64_encode<T>(value: T) -> String
 where
     T: AsRef<str> + Into<String>,
 {
+    let value = value.as_ref();
+    if value.is_empty() {
+        return "".into();
+    }
+
     let chunks = into_24bits_chunks(value);
     let bytes = into_6bits_bytes(chunks);
 

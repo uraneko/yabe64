@@ -1,3 +1,1 @@
-yet another base64 encoder
-
-impls rfc https://datatracker.ietf.org/doc/html/rfc4648
+Yet another base64 encoder, otherwise referred to as yabe64, is an implementation of rfc https://datatracker.ietf.org/doc/html/rfc4648.

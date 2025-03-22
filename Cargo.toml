@@ -3,4 +3,8 @@ name = "yabe64"
 version = "0.1.0"
 edition = "2024"
 
+[[test]]
+name = "base64"
+path = "tests/base64.rs"
+
 [dependencies]
