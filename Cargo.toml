@@ -7,4 +7,8 @@ edition = "2024"
 name = "base64"
 path = "tests/base64.rs"
 
+[[test]]
+name = "base32"
+path = "tests/base32.rs"
+
 [dependencies]
