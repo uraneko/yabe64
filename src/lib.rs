@@ -1,6 +1,8 @@
+pub mod base16;
 pub mod base32;
 pub mod base64;
 
+pub use base16::base16_encode;
 pub use base32::base32_encode;
 pub use base32::base32_hex_encode;
 pub use base64::base64_encode;
