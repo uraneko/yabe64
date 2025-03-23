@@ -11,4 +11,8 @@ path = "tests/base64.rs"
 name = "base32"
 path = "tests/base32.rs"
 
+[[test]]
+name = "base32_hex"
+path = "tests/base32_hex.rs"
+
 [dependencies]

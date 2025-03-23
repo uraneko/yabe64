@@ -34,11 +34,7 @@ const BASE32HEX: Base = Base::_32HEX;
 ///     one "=" padding character.
 
 /// separates the input string into chunks of 24bits
-fn into_40bits_chunks<T>(data: T) -> Vec<u64>
-where
-    T: AsRef<str> + Into<String>,
-{
-    let data = data.as_ref();
+fn into_40bits_chunks(data: &str) -> Vec<u64> {
     let mut bytes = data.as_bytes().chunks(5);
     // println!("{:?}", bytes.clone().collect::<Vec<&[u8]>>());
     let last = bytes.next_back().unwrap();
@@ -105,7 +101,7 @@ fn into_base32(bytes: Vec<u8>) -> String {
     // FIXME the table needs to have all values
     let mut cd = 6;
     let mut pad = true;
-    let encoded = bytes
+    bytes
         .rev()
         .inspect(|b| println!("{}", b))
         .map(|b| {
@@ -120,9 +116,7 @@ fn into_base32(bytes: Vec<u8>) -> String {
         .collect::<Vec<char>>()
         .into_iter()
         .rev()
-        .collect();
-
-    encoded
+        .collect()
 }
 
 pub fn base32_encode<T>(value: T) -> String
@@ -138,4 +132,43 @@ where
     let bytes = into_5bits_bytes(chunks);
 
     into_base32(bytes)
+}
+
+fn into_base32_hex(bytes: Vec<u8>) -> String {
+    let bytes = bytes.into_iter();
+
+    // FIXME the table needs to have all values
+    let mut cd = 6;
+    let mut pad = true;
+    bytes
+        .rev()
+        .inspect(|b| println!("{}", b))
+        .map(|b| {
+            if cd > 0 && pad && b == 0 {
+                cd -= 1;
+                '='
+            } else {
+                pad = false;
+                char_from_idx(b, BASE32HEX)
+            }
+        })
+        .collect::<Vec<char>>()
+        .into_iter()
+        .rev()
+        .collect()
+}
+
+pub fn base32_hex_encode<T>(value: T) -> String
+where
+    T: AsRef<str> + Into<String>,
+{
+    let value = value.as_ref();
+    if value.is_empty() {
+        return "".into();
+    }
+
+    let chunks = into_40bits_chunks(value);
+    let bytes = into_5bits_bytes(chunks);
+
+    into_base32_hex(bytes)
 }

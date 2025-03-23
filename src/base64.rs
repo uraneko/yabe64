@@ -18,11 +18,7 @@ const BASE64URL: Base = Base::_64URL;
 ///     one "=" padding character.
 
 /// separates the input string into chunks of 24bits
-fn into_24bits_chunks<T>(data: T) -> Vec<u32>
-where
-    T: AsRef<str> + Into<String>,
-{
-    let data = data.as_ref();
+fn into_24bits_chunks(data: &str) -> Vec<u32> {
     let mut bytes = data.as_bytes().chunks(3);
     // println!("{:?}", bytes.clone().collect::<Vec<&[u8]>>());
     let last = bytes.next_back().unwrap();
@@ -99,6 +95,21 @@ fn into_base64(bytes: Vec<u8>) -> String {
     encoded
 }
 
+pub fn base64_encode<T>(value: T) -> String
+where
+    T: AsRef<str> + Into<String>,
+{
+    let value = value.as_ref();
+    if value.is_empty() {
+        return "".into();
+    }
+
+    let chunks = into_24bits_chunks(value);
+    let bytes = into_6bits_bytes(chunks);
+
+    into_base64(bytes)
+}
+
 fn into_base64_url(bytes: Vec<u8>) -> String {
     let mut bytes = bytes.into_iter();
     let [last, before_last] = [bytes.next_back(), bytes.next_back()];
@@ -128,22 +139,6 @@ fn into_base64_url(bytes: Vec<u8>) -> String {
 
     encoded
 }
-
-pub fn base64_encode<T>(value: T) -> String
-where
-    T: AsRef<str> + Into<String>,
-{
-    let value = value.as_ref();
-    if value.is_empty() {
-        return "".into();
-    }
-
-    let chunks = into_24bits_chunks(value);
-    let bytes = into_6bits_bytes(chunks);
-
-    into_base64(bytes)
-}
-
 pub fn base64_url_encode<T>(value: T) -> String
 where
     T: AsRef<str> + Into<String>,
