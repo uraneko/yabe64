@@ -87,26 +87,20 @@ fn guess_encoding(value: &str) -> Result<Base, DecodeError> {
 // turns back chars from the encoding table to their table index values
 fn into_table_idx(value: &str, base: &Base) -> Vec<u8> {
     // no need for chars count, len is sufficient since all chars are ascii (1 byte)
-    // let len = value.len();
-    let iter = value.chars();
-    // let mut count = 0;
-    let chars = iter
-        .take_while(|c| {
-            // count += 1;
-            *c != '='
+    value
+        .chars()
+        .map(|c| match c {
+            '=' => 0,
+            val => idx_from_char(val, base),
         })
-        .map(|c| idx_from_char(c, base))
-        .collect::<Vec<u8>>();
-    // count -= 1;
-    // chars.extend((0..len - count).map(|_| 0));
-
-    chars
+        .collect::<Vec<u8>>()
 }
 
 fn into_24bits_bytes(value: Vec<u8>) -> Vec<u32> {
     // NOTE len must be an integra multiple of 4
     value
         .chunks(4)
+        .inspect(|c| println!("{:?}", c))
         .map(|b| {
             let mut mask = 0u32;
             mask |= b[0] as u32;
@@ -124,7 +118,7 @@ fn into_24bits_bytes(value: Vec<u8>) -> Vec<u32> {
 
 // get back 8 bit bytes from the 24bits bytes
 fn into_8bits_bytes(value: Vec<u32>) -> Vec<u8> {
-    value
+    let mut bytes = value
         .into_iter()
         .map(|b| {
             [
@@ -134,7 +128,12 @@ fn into_8bits_bytes(value: Vec<u32>) -> Vec<u8> {
             ]
         })
         .flatten()
-        .collect()
+        .collect::<Vec<u8>>();
+    while let Some(0) = bytes.last() {
+        bytes.pop();
+    }
+
+    bytes
 }
 
 fn into_decoded(value: Vec<u8>) -> String {

@@ -1,64 +1,126 @@
-use yabe64::Encoder;
+mod encoder {
+    use yabe64::Encoder;
 
-#[test]
-fn test1() {
-    let input = "";
-    let output = "";
-    let enc = Encoder::base16();
+    #[test]
+    fn test0() {
+        let input = "";
+        let output = "";
+        let enc = Encoder::base64();
 
-    assert_eq!(enc.encode(input), output);
+        assert_eq!(enc.encode(input), output);
+    }
+
+    #[test]
+    fn test1() {
+        let input = "f";
+        let output = "Zg==";
+        let enc = Encoder::base64();
+
+        assert_eq!(enc.encode(input), output);
+    }
+
+    #[test]
+    fn test2() {
+        let input = "fo";
+        let output = "Zm8=";
+        let enc = Encoder::base64();
+
+        assert_eq!(enc.encode(input), output);
+    }
+
+    #[test]
+    fn test3() {
+        let input = "foo";
+        let output = "Zm9v";
+        let enc = Encoder::base64();
+
+        assert_eq!(enc.encode(input), output);
+    }
+
+    #[test]
+    fn test4() {
+        let input = "foob";
+        let output = "Zm9vYg==";
+        let enc = Encoder::base64();
+
+        assert_eq!(enc.encode(input), output);
+    }
+
+    #[test]
+    fn test5() {
+        let input = "fooba";
+        let output = "Zm9vYmE=";
+        let enc = Encoder::base64();
+
+        assert_eq!(enc.encode(input), output);
+    }
+
+    #[test]
+    fn test7() {
+        let input = "foobar";
+        let output = "Zm9vYmFy";
+        let enc = Encoder::base64();
+
+        assert_eq!(enc.encode(input), output);
+    }
 }
 
-#[test]
-fn test2() {
-    let input = "f";
-    let output = "Zg==";
-    let enc = Encoder::base16();
+mod decoder {
+    use yabe64::base64_decode as decode;
 
-    assert_eq!(enc.encode(input), output);
-}
+    #[test]
+    fn test0() {
+        let input = "";
+        let output = "";
 
-#[test]
-fn test3() {
-    let input = "fo";
-    let output = "Zm8=";
-    let enc = Encoder::base16();
+        assert_eq!(decode(output), input);
+    }
 
-    assert_eq!(enc.encode(input), output);
-}
+    #[test]
+    fn test1() {
+        let input = "f";
+        let output = "Zg==";
 
-#[test]
-fn test4() {
-    let input = "foo";
-    let output = "Zm9v";
-    let enc = Encoder::base16();
+        assert_eq!(decode(output), input);
+    }
 
-    assert_eq!(enc.encode(input), output);
-}
+    #[test]
+    fn test2() {
+        let input = "fo";
+        let output = "Zm8=";
 
-#[test]
-fn test5() {
-    let input = "foob";
-    let output = "Zm9vYg==";
-    let enc = Encoder::base16();
+        assert_eq!(decode(output), input);
+    }
 
-    assert_eq!(enc.encode(input), output);
-}
+    #[test]
+    fn test3() {
+        let input = "foo";
+        let output = "Zm9v";
 
-#[test]
-fn test6() {
-    let input = "fooba";
-    let output = "Zm9vYmE=";
-    let enc = Encoder::base16();
+        assert_eq!(decode(output), input);
+    }
 
-    assert_eq!(enc.encode(input), output);
-}
+    #[test]
+    fn test4() {
+        let input = "foob";
+        let output = "Zm9vYg==";
 
-#[test]
-fn test7() {
-    let input = "foobar";
-    let output = "Zm9vYmFy";
-    let enc = Encoder::base16();
+        assert_eq!(decode(output), input);
+    }
 
-    assert_eq!(enc.encode(input), output);
+    #[test]
+    fn test5() {
+        let input = "fooba";
+        let output = "Zm9vYmE=";
+
+        assert_eq!(decode(output), input);
+    }
+
+    #[test]
+    fn test6() {
+        let input = "foobar";
+        let output = "Zm9vYmFy";
+
+        assert_eq!(decode(output), input);
+    }
 }
