@@ -1,5 +1,7 @@
+pub mod decoders;
 pub mod encoders;
 
+pub use decoders::base64_decode;
 pub use encoders::Encoder;
 
 pub const PAD: char = '=';
@@ -161,5 +163,173 @@ pub fn char_from_idx(idx: u8, base: Base) -> char {
         31 if base.is_32_hex() => 'V',
 
         _ => panic!("got impossile table index {} for base {:?}", idx, base),
+    }
+}
+
+pub fn idx_from_char(chr: char, base: &Base) -> u8 {
+    match chr {
+        // alpha
+        'A' if base.alpha_26() => 0,
+        'B' if base.alpha_26() => 1,
+        'C' if base.alpha_26() => 2,
+        'D' if base.alpha_26() => 3,
+        'E' if base.alpha_26() => 4,
+        'F' if base.alpha_26() => 5,
+        'G' if base.alpha_26() => 6,
+        'H' if base.alpha_26() => 7,
+        'I' if base.alpha_26() => 8,
+        'J' if base.alpha_26() => 9,
+        'K' if base.alpha_26() => 10,
+        'L' if base.alpha_26() => 11,
+        'M' if base.alpha_26() => 12,
+        'N' if base.alpha_26() => 13,
+        'O' if base.alpha_26() => 14,
+        'P' if base.alpha_26() => 15,
+        'Q' if base.alpha_26() => 16,
+        'R' if base.alpha_26() => 17,
+        'S' if base.alpha_26() => 18,
+        'T' if base.alpha_26() => 19,
+        'U' if base.alpha_26() => 20,
+        'V' if base.alpha_26() => 21,
+        'W' if base.alpha_26() => 22,
+        'X' if base.alpha_26() => 23,
+        'Y' if base.alpha_26() => 24,
+        'Z' if base.alpha_26() => 25,
+
+        'a' if base.is_any_64() => 26,
+        'b' if base.is_any_64() => 27,
+        'c' if base.is_any_64() => 28,
+        'd' if base.is_any_64() => 29,
+        'e' if base.is_any_64() => 30,
+        'f' if base.is_any_64() => 31,
+        'g' if base.is_any_64() => 32,
+        'h' if base.is_any_64() => 33,
+        'i' if base.is_any_64() => 34,
+        'j' if base.is_any_64() => 35,
+        'k' if base.is_any_64() => 36,
+        'l' if base.is_any_64() => 37,
+        'm' if base.is_any_64() => 38,
+        'n' if base.is_any_64() => 39,
+        'o' if base.is_any_64() => 40,
+        'p' if base.is_any_64() => 41,
+        'q' if base.is_any_64() => 42,
+        'r' if base.is_any_64() => 43,
+        's' if base.is_any_64() => 44,
+        't' if base.is_any_64() => 45,
+        'u' if base.is_any_64() => 46,
+        'v' if base.is_any_64() => 47,
+        'w' if base.is_any_64() => 48,
+        'x' if base.is_any_64() => 49,
+        'y' if base.is_any_64() => 50,
+        'z' if base.is_any_64() => 51,
+        '0' if base.is_any_64() => 52,
+        '1' if base.is_any_64() => 53,
+        '2' if base.is_any_64() => 54,
+        '3' if base.is_any_64() => 55,
+        '4' if base.is_any_64() => 56,
+        '5' if base.is_any_64() => 57,
+        '6' if base.is_any_64() => 58,
+        '7' if base.is_any_64() => 59,
+        '8' if base.is_any_64() => 60,
+        '9' if base.is_any_64() => 61,
+
+        // NOTE base 64 is done with this
+        '+' if base == &Base::_64 => 62,
+        '/' if base == &Base::_64 => 63,
+
+        // NOTE base 64 url is done with this
+        '-' if base == &Base::_64URL => 62,
+        '_' if base == &Base::_64URL => 63,
+
+        // NOTE base 32 is done with this
+        '2' if base.is_32() => 26,
+        '3' if base.is_32() => 27,
+        '4' if base.is_32() => 28,
+        '5' if base.is_32() => 29,
+        '6' if base.is_32() => 30,
+        '7' if base.is_32() => 31,
+
+        // hex
+        // NOTE base 16 is done with this
+        '0' if base.hex_16() => 0,
+        '1' if base.hex_16() => 1,
+        '2' if base.hex_16() => 2,
+        '3' if base.hex_16() => 3,
+        '4' if base.hex_16() => 4,
+        '5' if base.hex_16() => 5,
+        '6' if base.hex_16() => 6,
+        '7' if base.hex_16() => 7,
+        '8' if base.hex_16() => 8,
+        '9' if base.hex_16() => 9,
+        'A' if base.hex_16() => 10,
+        'B' if base.hex_16() => 11,
+        'C' if base.hex_16() => 12,
+        'D' if base.hex_16() => 13,
+        'E' if base.hex_16() => 14,
+        'F' if base.hex_16() => 15,
+
+        // NOTE base 32 hex is done with this
+        'G' if base.is_32_hex() => 16,
+        'H' if base.is_32_hex() => 17,
+        'I' if base.is_32_hex() => 18,
+        'J' if base.is_32_hex() => 19,
+        'K' if base.is_32_hex() => 20,
+        'L' if base.is_32_hex() => 21,
+        'M' if base.is_32_hex() => 22,
+        'N' if base.is_32_hex() => 23,
+        'O' if base.is_32_hex() => 24,
+        'P' if base.is_32_hex() => 25,
+        'Q' if base.is_32_hex() => 26,
+        'R' if base.is_32_hex() => 27,
+        'S' if base.is_32_hex() => 28,
+        'T' if base.is_32_hex() => 29,
+        'U' if base.is_32_hex() => 30,
+        'V' if base.is_32_hex() => 31,
+
+        _ => panic!("got impossile table char {} for base {:?}", chr, base),
+    }
+}
+
+pub(self) mod char_checks {
+
+    pub fn is_base64(chr: char) -> bool {
+        [
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+            'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
+            'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
+            'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '=',
+        ]
+        .contains(&chr)
+    }
+
+    pub fn is_base64_url(chr: char) -> bool {
+        !['+', '/'].contains(&chr)
+    }
+
+    pub fn is_base64_normal(chr: char) -> bool {
+        !['-', '_'].contains(&chr)
+    }
+
+    pub fn is_base32(chr: char) -> bool {
+        [
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+            'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '2', '3', '4', '5', '6', '7', '=',
+        ]
+        .contains(&chr)
+    }
+
+    pub fn is_base32_hex(chr: char) -> bool {
+        [
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+            'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', '=',
+        ]
+        .contains(&chr)
+    }
+
+    pub fn is_base16(chr: char) -> bool {
+        [
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
+        ]
+        .contains(&chr)
     }
 }
