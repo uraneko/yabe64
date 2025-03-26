@@ -1,6 +1,6 @@
 use std::io::BufReader;
 use std::io::{Read, stdin};
-use yabe64::decoders::base64_decode;
+use yabe64::decoders::Decoder;
 
 fn main() {
     let stdin = stdin();
@@ -9,5 +9,5 @@ fn main() {
         return;
     }
 
-    println!("{}", base64_decode(data));
+    println!("{}", Decoder::new().decode(data));
 }

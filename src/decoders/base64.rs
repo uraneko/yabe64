@@ -1,9 +1,5 @@
-use super::DecodeError;
-use crate::char_checks::*;
-use crate::{Base, PAD, idx_from_char};
-
-const BASE64: Base = Base::_64;
-const BASE64URL: Base = Base::_64URL;
+use super::Base;
+use super::{into_decoded, into_table_idx};
 
 /// DOCS
 /// last 3 octets
@@ -19,83 +15,9 @@ const BASE64URL: Base = Base::_64URL;
 ///     final unit of encoded output will be three characters followed by
 ///     one "=" padding character.
 
-// deduces the string encoding by process of elimination
-fn guess_encoding(value: &str) -> Result<Base, DecodeError> {
-    let chars = value.chars();
-    let is_64 = chars.clone().any(|c| c.is_ascii_lowercase())
-        || chars.clone().any(|c| ['+', '/', '-', '_'].contains(&c));
-    if is_64 {
-        if chars.clone().any(|c| !is_base64(c)) {
-            return Err(DecodeError::EncodedStringIsCorrupt);
-        }
-
-        match value.contains(['-', '_']) {
-            // base 64 url decode
-            true => {
-                return if chars.clone().any(|c| !is_base64_url(c)) {
-                    println!("64url");
-                    Err(DecodeError::EncodedStringIsCorrupt)
-                } else {
-                    Ok(Base::_64URL)
-                };
-            }
-            // base 64 decode
-            false => {
-                return if chars.clone().any(|c| !is_base64_normal(c)) {
-                    println!("64");
-                    Err(DecodeError::EncodedStringIsCorrupt)
-                } else {
-                    Ok(Base::_64)
-                };
-            }
-        }
-    }
-
-    let is_32 = chars.clone().any(|c| ['W', 'X', 'Y', 'Z'].contains(&c));
-    if is_32 {
-        if chars.clone().any(|c| !is_base32(c)) {
-            println!("32");
-            return Err(DecodeError::EncodedStringIsCorrupt);
-        }
-
-        return Ok(Base::_32);
-    }
-
-    let is_32_hex = !is_32 && chars.clone().any(|c| ['0', '1', '8', '9'].contains(&c));
-    if is_32_hex {
-        if chars.clone().any(|c| !is_base32_hex(c)) {
-            println!("32hex");
-            return Err(DecodeError::EncodedStringIsCorrupt);
-        }
-
-        return Ok(Base::_32HEX);
-    }
-
-    let is_16 = chars.clone().all(|c| c.is_ascii_hexdigit());
-    if is_16 {
-        println!("16");
-        if chars.clone().any(|c| !is_base32_hex(c)) {
-            return Err(DecodeError::EncodedStringIsCorrupt);
-        }
-
-        return Ok(Base::_16);
-    }
-
-    Err(DecodeError::StringIsNotBaseEncoded)
-}
-
-// turns back chars from the encoding table to their table index values
-fn into_table_idx(value: &str, base: &Base) -> Vec<u8> {
-    // no need for chars count, len is sufficient since all chars are ascii (1 byte)
-    value
-        .chars()
-        .map(|c| match c {
-            '=' => 0,
-            val => idx_from_char(val, base),
-        })
-        .collect::<Vec<u8>>()
-}
-
+// to implement the other decoders
+// only a different version of this function is needed
+// the other functions stay the same
 fn into_24bits_bytes(value: Vec<u8>) -> Vec<u32> {
     // NOTE len must be an integra multiple of 4
     value
@@ -136,24 +58,7 @@ fn into_8bits_bytes(value: Vec<u32>) -> Vec<u8> {
     bytes
 }
 
-fn into_decoded(value: Vec<u8>) -> String {
-    value.into_iter().map(|c| c as char).collect()
-}
-
-pub fn base64_decode<T>(value: T) -> String
-where
-    T: AsRef<str> + Into<String>,
-{
-    let value = value.as_ref();
-    if value.is_empty() {
-        return "".into();
-    }
-
-    let base = guess_encoding(value);
-    if let Err(e) = base {
-        panic!("{:?}", e);
-    }
-    let base = base.unwrap();
+pub fn base64_decode(value: &str, base: Base) -> String {
     let indices = into_table_idx(value, &base);
     let bytes = into_24bits_bytes(indices);
     let bytes = into_8bits_bytes(bytes);

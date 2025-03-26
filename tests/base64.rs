@@ -66,14 +66,14 @@ mod encoder {
 }
 
 mod decoder {
-    use yabe64::base64_decode as decode;
+    use yabe64::Decoder;
 
     #[test]
     fn test0() {
         let input = "";
         let output = "";
 
-        assert_eq!(decode(output), input);
+        assert_eq!(Decoder::new().decode(output), input);
     }
 
     #[test]
@@ -81,7 +81,7 @@ mod decoder {
         let input = "f";
         let output = "Zg==";
 
-        assert_eq!(decode(output), input);
+        assert_eq!(Decoder::new().decode(output), input);
     }
 
     #[test]
@@ -89,7 +89,7 @@ mod decoder {
         let input = "fo";
         let output = "Zm8=";
 
-        assert_eq!(decode(output), input);
+        assert_eq!(Decoder::new().decode(output), input);
     }
 
     #[test]
@@ -97,7 +97,7 @@ mod decoder {
         let input = "foo";
         let output = "Zm9v";
 
-        assert_eq!(decode(output), input);
+        assert_eq!(Decoder::new().decode(output), input);
     }
 
     #[test]
@@ -105,7 +105,7 @@ mod decoder {
         let input = "foob";
         let output = "Zm9vYg==";
 
-        assert_eq!(decode(output), input);
+        assert_eq!(Decoder::new().decode(output), input);
     }
 
     #[test]
@@ -113,7 +113,7 @@ mod decoder {
         let input = "fooba";
         let output = "Zm9vYmE=";
 
-        assert_eq!(decode(output), input);
+        assert_eq!(Decoder::new().decode(output), input);
     }
 
     #[test]
@@ -121,6 +121,6 @@ mod decoder {
         let input = "foobar";
         let output = "Zm9vYmFy";
 
-        assert_eq!(decode(output), input);
+        assert_eq!(Decoder::new().decode(output), input);
     }
 }

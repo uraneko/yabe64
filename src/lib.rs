@@ -1,12 +1,14 @@
 pub mod decoders;
 pub mod encoders;
 
-pub use decoders::base64_decode;
+pub use decoders::Decoder;
 pub use encoders::Encoder;
+
+pub use decoders::{B16, B32, B32HEX, B64, B64URL};
 
 pub const PAD: char = '=';
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Base {
     _64,
     _64URL,
