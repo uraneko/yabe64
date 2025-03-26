@@ -8,5 +8,5 @@ fn main() {
         return;
     }
 
-    println!("{}", yabe64::base64_encode(data));
+    println!("{}", yabe64::Encoder::base64().encode(data));
 }

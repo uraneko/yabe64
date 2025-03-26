@@ -1,12 +1,6 @@
-pub mod base16;
-pub mod base32;
-pub mod base64;
+pub mod encoders;
 
-pub use base16::base16_encode;
-pub use base32::base32_encode;
-pub use base32::base32_hex_encode;
-pub use base64::base64_encode;
-pub use base64::base64_url_encode;
+pub use encoders::Encoder;
 
 pub const PAD: char = '=';
 
