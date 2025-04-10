@@ -1,4 +1,4 @@
-use crate::{Base, PAD, char_from_idx};
+use crate::{Base, char_from_idx};
 
 const BASE32: Base = Base::_32;
 const BASE32HEX: Base = Base::_32HEX;
@@ -98,12 +98,10 @@ fn into_5bits_bytes(bytes: Vec<u64>) -> Vec<u8> {
 fn into_base32(bytes: Vec<u8>) -> String {
     let bytes = bytes.into_iter();
 
-    // FIXME the table needs to have all values
     let mut cd = 6;
     let mut pad = true;
     bytes
         .rev()
-        .inspect(|b| println!("{}", b))
         .map(|b| {
             if cd > 0 && pad && b == 0 {
                 cd -= 1;
