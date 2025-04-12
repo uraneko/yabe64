@@ -14,6 +14,7 @@ pub const B64URL: Base = Base::_64URL;
 pub const B32: Base = Base::_32;
 pub const B32HEX: Base = Base::_32HEX;
 pub const B16: Base = Base::_16;
+pub const B45: Base = Base::_45;
 
 // this only exists to match Encoder struct
 // otherwise a free function works fine
@@ -51,6 +52,7 @@ impl Decoder {
         }
 
         match base {
+            B45 => todo!(),
             B64 | B64URL => base64_decode(value, base),
             B32 => base32_decode(value, base),
             B32HEX => base32_decode(value, base),
@@ -72,6 +74,7 @@ impl Decoder {
         println!("{:?}", base);
 
         match base {
+            B45 => todo!(),
             B64 | B64URL => base64_decode(value, base),
             B32 | B32HEX => base32_decode(value, base),
             B16 => base16_decode(value, base),
