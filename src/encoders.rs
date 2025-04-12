@@ -2,11 +2,13 @@ use super::Base;
 
 pub mod base16;
 pub mod base32;
+pub mod base45;
 pub mod base64;
 
 use base16::base16_encode;
 use base32::base32_encode;
 use base32::base32_hex_encode;
+use base45::base45_encode;
 use base64::base64_encode;
 use base64::base64_url_encode;
 
@@ -33,6 +35,7 @@ impl Encoder {
 
     pub fn encode(&self, value: impl AsRef<str> + Into<String>) -> String {
         match self.base {
+            Base::_45 => base45_encode(value),
             Base::_64 => base64_encode(value),
             Base::_64URL => base64_url_encode(value),
             Base::_32 => base32_encode(value),

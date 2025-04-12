@@ -1,4 +1,8 @@
 // #![no_std]
+
+mod base_transformer;
+pub(crate) use base_transformer::BaseTransformer;
+
 pub mod decoders;
 pub mod encoders;
 
@@ -6,11 +10,13 @@ pub use decoders::Decoder;
 pub use encoders::Encoder;
 
 pub use decoders::{B16, B32, B32HEX, B64, B64URL};
+pub use encoders::base45::base45_encode;
 
 pub const PAD: char = '=';
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Base {
+    _45,
     _64,
     _64URL,
     _32,
@@ -42,6 +48,10 @@ impl Base {
     // base is strictly 32 hex
     fn is_32_hex(&self) -> bool {
         self == &Self::_32HEX
+    }
+
+    fn is_45(&self) -> bool {
+        self == &Self::_45
     }
 }
 
@@ -130,40 +140,54 @@ pub fn char_from_idx(idx: u8, base: Base) -> char {
 
         // hex
         // NOTE base 16 is done with this
-        0 if base.hex_16() => '0',
-        1 if base.hex_16() => '1',
-        2 if base.hex_16() => '2',
-        3 if base.hex_16() => '3',
-        4 if base.hex_16() => '4',
-        5 if base.hex_16() => '5',
-        6 if base.hex_16() => '6',
-        7 if base.hex_16() => '7',
-        8 if base.hex_16() => '8',
-        9 if base.hex_16() => '9',
-        10 if base.hex_16() => 'A',
-        11 if base.hex_16() => 'B',
-        12 if base.hex_16() => 'C',
-        13 if base.hex_16() => 'D',
-        14 if base.hex_16() => 'E',
-        15 if base.hex_16() => 'F',
+        0 if base.hex_16() | base.is_45() => '0',
+        1 if base.hex_16() | base.is_45() => '1',
+        2 if base.hex_16() | base.is_45() => '2',
+        3 if base.hex_16() | base.is_45() => '3',
+        4 if base.hex_16() | base.is_45() => '4',
+        5 if base.hex_16() | base.is_45() => '5',
+        6 if base.hex_16() | base.is_45() => '6',
+        7 if base.hex_16() | base.is_45() => '7',
+        8 if base.hex_16() | base.is_45() => '8',
+        9 if base.hex_16() | base.is_45() => '9',
+        10 if base.hex_16() | base.is_45() => 'A',
+        11 if base.hex_16() | base.is_45() => 'B',
+        12 if base.hex_16() | base.is_45() => 'C',
+        13 if base.hex_16() | base.is_45() => 'D',
+        14 if base.hex_16() | base.is_45() => 'E',
+        15 if base.hex_16() | base.is_45() => 'F',
 
         // NOTE base 32 hex is done with this
-        16 if base.is_32_hex() => 'G',
-        17 if base.is_32_hex() => 'H',
-        18 if base.is_32_hex() => 'I',
-        19 if base.is_32_hex() => 'J',
-        20 if base.is_32_hex() => 'K',
-        21 if base.is_32_hex() => 'L',
-        22 if base.is_32_hex() => 'M',
-        23 if base.is_32_hex() => 'N',
-        24 if base.is_32_hex() => 'O',
-        25 if base.is_32_hex() => 'P',
-        26 if base.is_32_hex() => 'Q',
-        27 if base.is_32_hex() => 'R',
-        28 if base.is_32_hex() => 'S',
-        29 if base.is_32_hex() => 'T',
-        30 if base.is_32_hex() => 'U',
-        31 if base.is_32_hex() => 'V',
+        16 if base.is_32_hex() | base.is_45() => 'G',
+        17 if base.is_32_hex() | base.is_45() => 'H',
+        18 if base.is_32_hex() | base.is_45() => 'I',
+        19 if base.is_32_hex() | base.is_45() => 'J',
+        20 if base.is_32_hex() | base.is_45() => 'K',
+        21 if base.is_32_hex() | base.is_45() => 'L',
+        22 if base.is_32_hex() | base.is_45() => 'M',
+        23 if base.is_32_hex() | base.is_45() => 'N',
+        24 if base.is_32_hex() | base.is_45() => 'O',
+        25 if base.is_32_hex() | base.is_45() => 'P',
+        26 if base.is_32_hex() | base.is_45() => 'Q',
+        27 if base.is_32_hex() | base.is_45() => 'R',
+        28 if base.is_32_hex() | base.is_45() => 'S',
+        29 if base.is_32_hex() | base.is_45() => 'T',
+        30 if base.is_32_hex() | base.is_45() => 'U',
+        31 if base.is_32_hex() | base.is_45() => 'V',
+
+        32 if base.is_45() => 'W',
+        33 if base.is_45() => 'X',
+        34 if base.is_45() => 'Y',
+        35 if base.is_45() => 'Z',
+        36 if base.is_45() => ' ',
+        37 if base.is_45() => '$',
+        38 if base.is_45() => '%',
+        39 if base.is_45() => '*',
+        40 if base.is_45() => '+',
+        41 if base.is_45() => '-',
+        42 if base.is_45() => '.',
+        43 if base.is_45() => '/',
+        44 if base.is_45() => ':',
 
         _ => panic!("got impossile table index {} for base {:?}", idx, base),
     }
