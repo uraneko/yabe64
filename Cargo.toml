@@ -15,4 +15,8 @@ path = "tests/base32.rs"
 name = "base32_hex"
 path = "tests/base32_hex.rs"
 
+[[test]]
+name = "base45"
+path = "tests/base45.rs"
+
 [dependencies]
