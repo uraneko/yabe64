@@ -1,6 +1,6 @@
 [package]
 name = "yabe64"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
 [[test]]
@@ -18,5 +18,3 @@ path = "tests/base32_hex.rs"
 [[test]]
 name = "base45"
 path = "tests/base45.rs"
-
-[dependencies]
