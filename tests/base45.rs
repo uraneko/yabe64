@@ -26,3 +26,14 @@ mod encoder {
     }
 }
 
+mod decoder {
+    use yabe64::base45_decode;
+
+    #[test]
+    fn test0() {
+        let input = "QED8WEX0";
+        let output = "ietf!";
+
+        assert_eq!(base45_decode(input), output);
+    }
+}
