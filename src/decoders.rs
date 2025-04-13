@@ -3,10 +3,12 @@ use super::{Base, idx_from_char};
 
 pub mod base16;
 pub mod base32;
+pub mod base45;
 pub mod base64;
 
 pub use base16::base16_decode;
 pub use base32::base32_decode;
+pub use base45::base45_decode;
 pub use base64::base64_decode;
 
 pub const B64: Base = Base::_64;

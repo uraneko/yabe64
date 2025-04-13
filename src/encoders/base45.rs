@@ -3,6 +3,7 @@ use crate::{Base, PAD, char_from_idx};
 const BASE45: Base = Base::_45;
 
 /// separates the input string into chunks of 16bits
+// TODO rename chunk_and_cast
 fn into_16bits_chunks(data: &str) -> Vec<u16> {
     let mut bytes = data.as_bytes().chunks(2);
     // println!("{:?}", bytes.clone().collect::<Vec<&[u8]>>());
