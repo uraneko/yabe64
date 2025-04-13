@@ -20,12 +20,18 @@ fn into_16bits_chunks(data: &str) -> Vec<u16> {
         .collect::<Vec<u16>>();
 
     let last = {
-        let mut mask = 0u16;
-        mask |= last[0] as u16;
-        mask <<= 8;
-        mask |= if last.len() < 2 { 0u16 } else { last[1] as u16 };
+        match *last {
+            [one] => one as u16,
+            [one, two] => {
+                let mut mask = 0u16;
+                mask |= one as u16;
+                mask <<= 8;
+                mask |= two as u16;
 
-        mask
+                mask
+            }
+            _ => unreachable!("chunk can only be of length 1 or 2"),
+        }
     };
     bytes.push(last);
 
@@ -42,7 +48,10 @@ fn into_base45_bytes(bytes: Vec<u16>) -> Vec<u8> {
             let mut transformer = crate::BaseTransformer::new(45, b);
             transformer.transform_all();
 
-            let seq = transformer.sequence().to_vec();
+            let mut seq = transformer.sequence().to_vec();
+            if seq.len() == 1 {
+                seq.push(0);
+            }
             println!("{:?}", seq);
 
             seq
