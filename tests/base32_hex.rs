@@ -1,5 +1,5 @@
 mod encoder {
-    use yabe64::Encoder;
+    use makura::Encoder;
 
     #[test]
     fn test0() {
@@ -57,8 +57,8 @@ mod encoder {
 }
 
 mod decoder {
-    use yabe64::B32HEX;
-    use yabe64::Decoder;
+    use makura::B32HEX;
+    use makura::Decoder;
 
     #[test]
     fn test0() {
