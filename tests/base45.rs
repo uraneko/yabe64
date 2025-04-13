@@ -1,5 +1,5 @@
 mod encoder {
-    use yabe64::Encoder;
+    use makura::Encoder;
 
     #[test]
     fn test0() {
@@ -32,8 +32,8 @@ mod encoder {
 }
 
 mod decoder {
-    use yabe64::B45;
-    use yabe64::Decoder;
+    use makura::B45;
+    use makura::Decoder;
 
     #[test]
     fn test0() {
