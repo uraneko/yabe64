@@ -113,46 +113,24 @@ impl Decoder {
             }
         }
 
-        // the chars constraint may apply for base16/32hex chars
-        // but the length constraint is unique to base45
-        let is_45 = chars.clone().all(|c| is_base45(c)) && (len % 3 == 0 || len % 3 == 2);
-        if is_45 {
-            return Ok(Base::_45);
-        }
-
         let is_32 = chars.clone().all(|c| is_base32(c)) && len % 8 == 0;
         let is_32_hex = chars.clone().all(|c| is_base32_hex(c)) && len % 8 == 0;
         let is_16 = chars.clone().all(|c| c.is_ascii_hexdigit()) && len % 2 == 0;
+
+        let is_45 = chars.clone().all(|c| is_base45(c)) && (len % 3 == 0 || len % 3 == 2);
+        if is_45 && !is_32 && !is_32_hex && !is_16 {
+            return Ok(Base::_45);
+        }
 
         if is_32 && is_32_hex {
             if let Some(b) = &self.hint {
                 return Ok(*b);
             }
-        }
-
-        if is_32 {
-            println!("32");
-            if chars.clone().any(|c| !is_base32(c)) {
-                return Err(DecodeError::EncodedStringIsCorrupt);
-            }
-
+        } else if is_32 {
             return Ok(Base::_32);
-        }
-        if is_32_hex {
-            println!("32hex");
-            if chars.clone().any(|c| !is_base32_hex(c)) {
-                return Err(DecodeError::EncodedStringIsCorrupt);
-            }
-
+        } else if is_32_hex {
             return Ok(Base::_32HEX);
-        }
-
-        if is_16 {
-            println!("16");
-            if chars.clone().any(|c| !is_base32_hex(c)) {
-                return Err(DecodeError::EncodedStringIsCorrupt);
-            }
-
+        } else if is_16 {
             return Ok(Base::_16);
         }
 
