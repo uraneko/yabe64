@@ -9,12 +9,17 @@ pub mod encoders;
 pub use decoders::Decoder;
 pub use encoders::Encoder;
 
-pub use decoders::{B16, B32, B32HEX, B64, B64URL};
-
 pub use decoders::base45::base45_decode;
 pub use encoders::base45::base45_encode;
 
 pub const PAD: char = '=';
+
+pub const B64: Base = Base::_64;
+pub const B64URL: Base = Base::_64URL;
+pub const B32: Base = Base::_32;
+pub const B32HEX: Base = Base::_32HEX;
+pub const B16: Base = Base::_16;
+pub const B45: Base = Base::_45;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Base {

@@ -23,6 +23,11 @@ impl Encoder {
     pub fn base64_url() -> Self {
         Self { base: Base::_64URL }
     }
+
+    pub fn base45() -> Self {
+        Self { base: Base::_45 }
+    }
+
     pub fn base32() -> Self {
         Self { base: Base::_32 }
     }

@@ -30,8 +30,6 @@ fn into_base45_values(bytes: Vec<u8>) -> Vec<u16> {
 fn into_base265_values(value: Vec<u16>) -> Vec<u8> {
     let mut bytes = value.into_iter();
     let last = bytes.next_back().unwrap();
-    // NOTE either shift and take u8 or do bitand and take u8
-    // doing both is redundant
     let mut bytes = bytes
         .map(|b| [((b & 0xff00) >> 8) as u8, b as u8])
         .flatten()

@@ -1,12 +1,13 @@
 mod encoder {
-    use yabe64::base45_encode;
+    use yabe64::Encoder;
 
     #[test]
     fn test0() {
         let input = "AB";
         let output = "BB8";
+        let enc = Encoder::base45();
 
-        assert_eq!(base45_encode(input), output);
+        assert_eq!(enc.encode(input), output);
     }
 
     #[test]
@@ -14,7 +15,9 @@ mod encoder {
         let input = "Hello!!";
         let output = "%69 VD92EX0";
 
-        assert_eq!(base45_encode(input), output);
+        let enc = Encoder::base45();
+
+        assert_eq!(enc.encode(input), output);
     }
 
     #[test]
@@ -22,18 +25,21 @@ mod encoder {
         let input = "base-45";
         let output = "UJCLQE7W581";
 
-        assert_eq!(base45_encode(input), output);
+        let enc = Encoder::base45();
+
+        assert_eq!(enc.encode(input), output);
     }
 }
 
 mod decoder {
-    use yabe64::base45_decode;
+    use yabe64::B45;
+    use yabe64::Decoder;
 
     #[test]
     fn test0() {
         let input = "QED8WEX0";
         let output = "ietf!";
 
-        assert_eq!(base45_decode(input), output);
+        assert_eq!(Decoder::force_decode(input, B45), output);
     }
 }
