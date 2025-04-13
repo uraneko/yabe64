@@ -340,7 +340,7 @@ pub fn idx_from_char(chr: char, base: &Base) -> u8 {
 
 pub(self) mod char_checks {
 
-    pub fn is_base64(chr: char) -> bool {
+    pub(crate) fn is_base64(chr: char) -> bool {
         [
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
             'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
@@ -350,15 +350,15 @@ pub(self) mod char_checks {
         .contains(&chr)
     }
 
-    pub fn is_base64_url(chr: char) -> bool {
+    pub(crate) fn is_base64_url(chr: char) -> bool {
         !['+', '/'].contains(&chr)
     }
 
-    pub fn is_base64_normal(chr: char) -> bool {
+    pub(crate) fn is_base64_normal(chr: char) -> bool {
         !['-', '_'].contains(&chr)
     }
 
-    pub fn is_base32(chr: char) -> bool {
+    pub(crate) fn is_base32(chr: char) -> bool {
         [
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
             'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '2', '3', '4', '5', '6', '7', '=',
@@ -366,7 +366,7 @@ pub(self) mod char_checks {
         .contains(&chr)
     }
 
-    pub fn is_base32_hex(chr: char) -> bool {
+    pub(crate) fn is_base32_hex(chr: char) -> bool {
         [
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
             'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', '=',
@@ -374,10 +374,19 @@ pub(self) mod char_checks {
         .contains(&chr)
     }
 
-    pub fn is_base16(chr: char) -> bool {
+    pub(crate) fn is_base16(chr: char) -> bool {
         [
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
         ]
         .contains(&chr)
+    }
+
+    pub(crate) fn is_base45(c: char) -> bool {
+        [
+            'W', 'X', 'Y', 'Z', ' ', '$', '%', '*', '+', '-', '.', '/', ':',
+        ]
+        .contains(&c)
+            || is_base16(c)
+            || (is_base32_hex(c) && c != '=')
     }
 }

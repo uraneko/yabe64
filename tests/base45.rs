@@ -40,6 +40,6 @@ mod decoder {
         let input = "QED8WEX0";
         let output = "ietf!";
 
-        assert_eq!(Decoder::force_decode(input, B45), output);
+        assert_eq!(Decoder::new().decode(input), output);
     }
 }

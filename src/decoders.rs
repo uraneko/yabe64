@@ -113,6 +113,13 @@ impl Decoder {
             }
         }
 
+        // the chars constraint may apply for base16/32hex chars
+        // but the length constraint is unique to base45
+        let is_45 = chars.clone().all(|c| is_base45(c)) && (len % 3 == 0 || len % 3 == 2);
+        if is_45 {
+            return Ok(Base::_45);
+        }
+
         let is_32 = chars.clone().all(|c| is_base32(c)) && len % 8 == 0;
         let is_32_hex = chars.clone().all(|c| is_base32_hex(c)) && len % 8 == 0;
         let is_16 = chars.clone().all(|c| c.is_ascii_hexdigit()) && len % 2 == 0;
