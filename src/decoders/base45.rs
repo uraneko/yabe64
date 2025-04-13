@@ -1,67 +1,59 @@
 use super::Base;
 use super::{into_decoded, into_table_idx};
 
-/// DOCS
-/// last 3 octets
-/// (1) The final quantum of encoding input is an integral multiple of 24
-///     bits; here, the final unit of encoded output will be an integral
-///     multiple of 4 characters with no "=" padding.
-///
-/// (2) The final quantum of encoding input is exactly 8 bits; here, the
-///     final unit of encoded output will be two characters followed by
-///     two "=" padding characters.
-///
-/// (3) The final quantum of encoding input is exactly 16 bits; here, the
-///     final unit of encoded output will be three characters followed by
-///     one "=" padding character.
+const BASE45: Base = Base::_45;
 
-// to implement the other decoders
-// only a different version of this function is needed
-// the other functions stay the same
-fn into_24bits_bytes(value: Vec<u8>) -> Vec<u32> {
-    // NOTE len must be an integra multiple of 4
-    value
-        .chunks(4)
-        .inspect(|c| println!("{:?}", c))
-        .map(|b| {
-            let mut mask = 0u32;
-            mask |= b[0] as u32;
-            mask <<= 6;
-            mask |= b[1] as u32;
-            mask <<= 6;
-            mask |= b[2] as u32;
-            mask <<= 6;
-            mask |= b[3] as u32;
+fn into_base45_values(bytes: Vec<u8>) -> Vec<u16> {
+    let mut chunks = bytes.chunks(3);
+    let last = chunks.next_back().unwrap();
 
-            mask
-        })
-        .collect()
+    let mut values: Vec<u16> = chunks
+        // .inspect(|c| println!("{:?}", c))
+        .map(|b| b[2] as u16 * 45 * 45 + b[1] as u16 * 45 + b[0] as u16)
+        .collect();
+
+    let last = {
+        if last.len() == 3 {
+            last[2] as u16 * 45 * 45 + last[1] as u16 * 45 + last[0] as u16
+        } else if last.len() == 2 {
+            last[1] as u16 * 45 + last[0] as u16
+        } else {
+            unreachable!("last chunk len can only be 2 or 3");
+        }
+    };
+    values.push(last);
+
+    values
 }
 
 // get back 8 bit bytes from the 24bits bytes
-fn into_8bits_bytes(value: Vec<u32>) -> Vec<u8> {
-    let mut bytes = value
-        .into_iter()
-        .map(|b| {
-            [
-                ((b & 0xff0000) >> 16) as u8,
-                ((b & 0xff00) >> 8) as u8,
-                b as u8,
-            ]
-        })
+fn into_base265_values(value: Vec<u16>) -> Vec<u8> {
+    let mut bytes = value.into_iter();
+    let last = bytes.next_back().unwrap();
+    // NOTE either shift and take u8 or do bitand and take u8
+    // doing both is redundant
+    let mut bytes = bytes
+        .map(|b| [((b & 0xff00) >> 8) as u8, b as u8])
         .flatten()
         .collect::<Vec<u8>>();
-    while let Some(0) = bytes.last() {
-        bytes.pop();
+
+    if last < u8::MAX as u16 {
+        bytes.push(last as u8);
+    } else {
+        bytes.push((last >> 8) as u8);
+        bytes.push(last as u8);
     }
 
     bytes
 }
 
-pub fn base64_decode(value: &str, base: Base) -> String {
-    let indices = into_table_idx(value, &base);
-    let bytes = into_24bits_bytes(indices);
-    let bytes = into_8bits_bytes(bytes);
+pub fn base45_decode(value: &str) -> String {
+    let indices = into_table_idx(value, &BASE45);
+    println!(">{:?}", indices);
+    let bytes = into_base45_values(indices);
+    println!(">{:?}", bytes);
+    let bytes = into_base265_values(bytes);
+    println!(">{:?}", bytes);
 
     into_decoded(bytes)
 }
