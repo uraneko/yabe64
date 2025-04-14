@@ -1,4 +1,6 @@
 #![cfg(feature = "base45")]
+use crate::makura_alloc::{String, Vec};
+
 use crate::BASE45;
 use crate::char_from_idx;
 

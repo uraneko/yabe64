@@ -1,4 +1,6 @@
 #![cfg(any(feature = "base32", feature = "base32_hex"))]
+use crate::makura_alloc::{String, Vec};
+
 use super::{into_decoded, into_table_idx};
 use crate::{BASE32, BASE32HEX};
 

@@ -1,4 +1,6 @@
 #![cfg(any(feature = "base64", feature = "base64_url"))]
+use crate::makura_alloc::{String, Vec};
+
 use super::{into_decoded, into_table_idx};
 use crate::{BASE64, BASE64URL};
 
