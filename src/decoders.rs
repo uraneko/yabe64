@@ -8,10 +8,12 @@ pub mod base64;
 
 pub use base16::base16_decode;
 pub use base32::base32_decode;
+pub use base32::base32_hex_decode;
 pub use base45::base45_decode;
 pub use base64::base64_decode;
+pub use base64::base64_url_decode;
 
-use crate::{B16, B32, B32HEX, B45, B64, B64URL};
+use crate::{BASE16, BASE32, BASE32HEX, BASE45, BASE64, BASE64URL};
 
 // this only exists to match Encoder struct
 // otherwise a free function works fine
@@ -49,11 +51,12 @@ impl Decoder {
         }
 
         match base {
-            B45 => base45_decode(value),
-            B64 | B64URL => base64_decode(value, base),
-            B32 => base32_decode(value, base),
-            B32HEX => base32_decode(value, base),
-            B16 => base16_decode(value),
+            BASE64 => base64_decode(value),
+            BASE64URL => base64_url_decode(value),
+            BASE45 => base45_decode(value),
+            BASE32 => base32_decode(value),
+            BASE32HEX => base32_hex_decode(value),
+            BASE16 => base16_decode(value),
         }
     }
 
@@ -71,10 +74,12 @@ impl Decoder {
         println!("{:?}", base);
 
         match base {
-            B45 => base45_decode(value),
-            B64 | B64URL => base64_decode(value, base),
-            B32 | B32HEX => base32_decode(value, base),
-            B16 => base16_decode(value),
+            BASE64 => base64_decode(value),
+            BASE64URL => base64_url_decode(value),
+            BASE45 => base45_decode(value),
+            BASE32 => base32_decode(value),
+            BASE32HEX => base32_hex_decode(value),
+            BASE16 => base16_decode(value),
         }
     }
 

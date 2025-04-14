@@ -66,8 +66,7 @@ mod encoder {
 }
 
 mod decoder {
-
-    use makura::B16;
+    use makura::BASE16;
     use makura::Decoder;
 
     #[test]
@@ -107,7 +106,7 @@ mod decoder {
         let input = "foob";
         let output = "666F6F62";
 
-        assert_eq!(Decoder::new().hint(B16).decode(output), input);
+        assert_eq!(Decoder::new().hint(BASE16).decode(output), input);
     }
 
     #[test]

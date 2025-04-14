@@ -1,5 +1,6 @@
-use super::Base;
+#![cfg(any(feature = "base64", feature = "base64_url"))]
 use super::{into_decoded, into_table_idx};
+use crate::{BASE64, BASE64URL};
 
 /// DOCS
 /// last 3 octets
@@ -58,8 +59,18 @@ fn into_8bits_bytes(value: Vec<u32>) -> Vec<u8> {
     bytes
 }
 
-pub fn base64_decode(value: &str, base: Base) -> String {
-    let indices = into_table_idx(value, &base);
+#[cfg(feature = "base64")]
+pub fn base64_decode(value: &str) -> String {
+    let indices = into_table_idx(value, &BASE64);
+    let bytes = into_24bits_bytes(indices);
+    let bytes = into_8bits_bytes(bytes);
+
+    into_decoded(bytes)
+}
+
+#[cfg(feature = "base64_url")]
+pub fn base64_url_decode(value: &str) -> String {
+    let indices = into_table_idx(value, &BASE64URL);
     let bytes = into_24bits_bytes(indices);
     let bytes = into_8bits_bytes(bytes);
 

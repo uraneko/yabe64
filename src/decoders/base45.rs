@@ -1,7 +1,6 @@
-use super::Base;
+#![cfg(feature = "base45")]
 use super::{into_decoded, into_table_idx};
-
-const BASE45: Base = Base::_45;
+use crate::BASE45;
 
 fn into_base45_values(bytes: Vec<u8>) -> Vec<u16> {
     let mut chunks = bytes.chunks(3);

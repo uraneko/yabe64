@@ -1,5 +1,6 @@
-use super::Base;
+#![cfg(any(feature = "base32", feature = "base32_hex"))]
 use super::{into_decoded, into_table_idx};
+use crate::{BASE32, BASE32HEX};
 
 /// DOCS
 /// last 3 octets
@@ -68,8 +69,18 @@ fn into_8bits_bytes(value: Vec<u64>) -> Vec<u8> {
     bytes
 }
 
-pub fn base32_decode(value: &str, base: Base) -> String {
-    let indices = into_table_idx(value, &base);
+#[cfg(feature = "base32")]
+pub fn base32_decode(value: &str) -> String {
+    let indices = into_table_idx(value, &BASE32);
+    let bytes = into_40bits_bytes(indices);
+    let bytes = into_8bits_bytes(bytes);
+
+    into_decoded(bytes)
+}
+
+#[cfg(feature = "base32_hex")]
+pub fn base32_hex_decode(value: &str) -> String {
+    let indices = into_table_idx(value, &BASE32HEX);
     let bytes = into_40bits_bytes(indices);
     let bytes = into_8bits_bytes(bytes);
 

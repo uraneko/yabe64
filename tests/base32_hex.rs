@@ -57,7 +57,7 @@ mod encoder {
 }
 
 mod decoder {
-    use makura::B32HEX;
+    use makura::BASE32HEX;
     use makura::Decoder;
 
     #[test]
@@ -65,7 +65,7 @@ mod decoder {
         let input = "f";
         let output = "CO======";
 
-        assert_eq!(Decoder::new().hint(B32HEX).decode(output), input);
+        assert_eq!(Decoder::new().hint(BASE32HEX).decode(output), input);
     }
 
     #[test]
@@ -73,7 +73,7 @@ mod decoder {
         let input = "fo";
         let output = "CPNG====";
 
-        assert_eq!(Decoder::new().hint(B32HEX).decode(output), input);
+        assert_eq!(Decoder::new().hint(BASE32HEX).decode(output), input);
     }
 
     #[test]
@@ -81,7 +81,7 @@ mod decoder {
         let input = "foo";
         let output = "CPNMU===";
 
-        assert_eq!(Decoder::new().hint(B32HEX).decode(output), input);
+        assert_eq!(Decoder::new().hint(BASE32HEX).decode(output), input);
     }
 
     #[test]
@@ -89,7 +89,7 @@ mod decoder {
         let input = "foob";
         let output = "CPNMUOG=";
 
-        assert_eq!(Decoder::new().hint(B32HEX).decode(output), input);
+        assert_eq!(Decoder::new().hint(BASE32HEX).decode(output), input);
     }
 
     #[test]
@@ -97,7 +97,7 @@ mod decoder {
         let input = "fooba";
         let output = "CPNMUOJ1";
 
-        assert_eq!(Decoder::new().hint(B32HEX).decode(output), input);
+        assert_eq!(Decoder::new().hint(BASE32HEX).decode(output), input);
     }
 
     #[test]
@@ -105,6 +105,6 @@ mod decoder {
         let input = "foobar";
         let output = "CPNMUOJ1E8======";
 
-        assert_eq!(Decoder::new().hint(B32HEX).decode(output), input);
+        assert_eq!(Decoder::new().hint(BASE32HEX).decode(output), input);
     }
 }

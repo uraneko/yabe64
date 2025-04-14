@@ -9,17 +9,14 @@ pub mod encoders;
 pub use decoders::Decoder;
 pub use encoders::Encoder;
 
-pub use decoders::base45::base45_decode;
-pub use encoders::base45::base45_encode;
-
 pub const PAD: char = '=';
 
-pub const B64: Base = Base::_64;
-pub const B64URL: Base = Base::_64URL;
-pub const B32: Base = Base::_32;
-pub const B32HEX: Base = Base::_32HEX;
-pub const B16: Base = Base::_16;
-pub const B45: Base = Base::_45;
+pub const BASE64: Base = Base::_64;
+pub const BASE64URL: Base = Base::_64URL;
+pub const BASE32: Base = Base::_32;
+pub const BASE32HEX: Base = Base::_32HEX;
+pub const BASE16: Base = Base::_16;
+pub const BASE45: Base = Base::_45;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Base {
@@ -62,7 +59,7 @@ impl Base {
     }
 }
 
-pub fn char_from_idx(idx: u8, base: Base) -> char {
+pub fn char_from_idx(idx: u8, base: &Base) -> char {
     match idx {
         // alpha
         0 if base.alpha_26() => 'A',
@@ -130,12 +127,12 @@ pub fn char_from_idx(idx: u8, base: Base) -> char {
         61 if base.is_any_64() => '9',
 
         // NOTE base 64 is done with this
-        62 if base == Base::_64 => '+',
-        63 if base == Base::_64 => '/',
+        62 if base == &Base::_64 => '+',
+        63 if base == &Base::_64 => '/',
 
         // NOTE base 64 url is done with this
-        62 if base == Base::_64URL => '-',
-        63 if base == Base::_64URL => '_',
+        62 if base == &Base::_64URL => '-',
+        63 if base == &Base::_64URL => '_',
 
         // NOTE base 32 is done with tihs
         26 if base.is_32() => '2',
