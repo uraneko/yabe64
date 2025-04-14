@@ -74,7 +74,7 @@ mod decoder {
         let input = "";
         let output = "";
 
-        assert_eq!(Decoder::new().decode(output).unwrap(), input);
+        assert_eq!(Decoder::decode(output).unwrap(), input);
     }
 
     #[test]

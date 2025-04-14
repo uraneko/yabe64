@@ -30,25 +30,9 @@ pub enum DecodeError {
 
 // this only exists to match Encoder struct
 // otherwise a free function works fine
-pub struct Decoder {
-    hint: Option<Base>,
-}
+pub struct Decoder;
 
 impl Decoder {
-    /// creates a new decoder
-    pub fn new() -> Self {
-        Self {
-            hint: Default::default(),
-        }
-    }
-
-    /// changes the Decoder's hint value to the passed base
-    pub fn hint(mut self, base: Base) -> Self {
-        self.hint = Some(base);
-
-        self
-    }
-
     /// decodes a given string
     /// takes encoded string and base of the string encoding
     /// returns decoded string value
@@ -83,13 +67,13 @@ impl Decoder {
     /// errors when `guess_encoding` returns an error
     ///
     /// otherwise always returns Ok
-    pub fn decode(&self, value: impl AsRef<str>) -> Result<String, DecodeError> {
+    pub fn decode(value: impl AsRef<str>) -> Result<String, DecodeError> {
         let value = value.as_ref();
         if value.is_empty() {
             return Ok("".into());
         }
 
-        let base = match self.guess_encoding(value) {
+        let base = match Self::deduce_encoding(value) {
             Err(e) => return Err(e),
             Ok(b) => b,
         };
@@ -108,9 +92,8 @@ impl Decoder {
     // 1 - length of value should be different between bases
     // 2 - existence of padding char '='
     // 3 - the char ranges, some chars are specific to some base(s) alphabets
-    // 0 - b32 and b32hex give me 2 different encoded strings
-    // ofc since their tables are vastly different,
-    // doesnt matter, as the original strings could be anything
+    // 0 - if base encodings had patterns
+    // then encoding can be further deduced through patterns
     /// Deduces the string encoding by process of elimination. Takes a base encoded string.
     ///
     /// # Return
@@ -134,91 +117,38 @@ impl Decoder {
             } else {
                 BASE64
             });
-        } else if value.contains([' ', '$', '%', '*', '+', '-', '.', '/', ':']) {
-            let residual = len % 3;
-            if residual == 1 {
-                return Err(DecodeError::BadEncodedString);
-            }
-
-            return Ok(BASE45);
         } else if value
             .chars()
             .all(|c| ('0'..='9').contains(&c) || ('A'..='F').contains(&c))
         {
-            if len % 2 != 0 {
+            if len % 2 == 0 {
+                return Ok(BASE16);
+            } else if len % 3 == 1 {
                 return Err(DecodeError::BadEncodedString);
             }
-
-            return Ok(BASE16);
-        } else if value.contains(['0', '1', '8', '9']) && !value.contains(['W', 'X', 'Y', 'Z']) {
-            if len % 8 != 0 {
+        } else if value.chars().all(|c| {
+            ('0'..='9').contains(&c)
+                || ('A'..='Z').contains(&c)
+                || [' ', '$', '%', '*', '+', '-', '.', '/', ':'].contains(&c)
+        }) {
+            let residual = len % 3;
+            if residual != 1 {
+                return Ok(BASE45);
+            } else if len % 8 != 0 {
                 return Err(DecodeError::BadEncodedString);
             }
-
+        }
+        // HACK this function needs a refactor... again
+        // should have been if else not if
+        if value
+            .chars()
+            .all(|c| ('0'..='9').contains(&c) || ('A'..='V').contains(&c) || c == '=')
+        {
             return Ok(BASE32HEX);
-        } else if !value.contains(['0', '1', '8', '9']) || value.contains(['W', 'X', 'Y', 'Z']) {
-            if len % 8 != 0 {
-                return Err(DecodeError::BadEncodedString);
-            }
-
+        } else if !value.contains(['0', '1', '8', '9'])
+        /* || value.contains(['W', 'X', 'Y', 'Z']) */ // this should be an and maybe condition
+        {
             return Ok(BASE32);
-        }
-
-        Err(DecodeError::UnknownBaseEncodingIfAny)
-    }
-
-    // DEPRECATED
-    // #[deprecated(since = "0.1.2", note = "please use deduce_encoding instead")]
-    pub fn guess_encoding(&self, value: &str) -> Result<Base, DecodeError> {
-        let len = value.len();
-        let chars = value.chars();
-        let is_64 = chars.clone().any(|c| c.is_ascii_lowercase())
-            || chars.clone().any(|c| ['+', '/', '-', '_'].contains(&c));
-        let is_64 = is_64 && len % 4 == 0;
-        if is_64 {
-            if chars.clone().any(|c| !is_base64(c)) {
-                return Err(DecodeError::BadEncodedString);
-            }
-
-            match value.contains(['-', '_']) {
-                // base 64 url decode
-                true => {
-                    return if chars.clone().any(|c| !is_base64_url(c)) {
-                        Err(DecodeError::BadEncodedString)
-                    } else {
-                        Ok(Base::_64URL)
-                    };
-                }
-                // base 64 decode
-                false => {
-                    return if chars.clone().any(|c| !is_base64_normal(c)) {
-                        Err(DecodeError::BadEncodedString)
-                    } else {
-                        Ok(Base::_64)
-                    };
-                }
-            }
-        }
-
-        let is_32 = chars.clone().all(|c| is_base32(c)) && len % 8 == 0;
-        let is_32_hex = chars.clone().all(|c| is_base32_hex(c)) && len % 8 == 0;
-        let is_16 = chars.clone().all(|c| c.is_ascii_hexdigit()) && len % 2 == 0;
-
-        let is_45 = chars.clone().all(|c| is_base45(c)) && (len % 3 == 0 || len % 3 == 2);
-        if is_45 && !is_32 && !is_32_hex && !is_16 {
-            return Ok(Base::_45);
-        }
-
-        if is_32 && is_32_hex {
-            if let Some(b) = &self.hint {
-                return Ok(*b);
-            }
-        } else if is_32 {
-            return Ok(Base::_32);
-        } else if is_32_hex {
-            return Ok(Base::_32HEX);
-        } else if is_16 {
-            return Ok(Base::_16);
         }
 
         Err(DecodeError::UnknownBaseEncodingIfAny)
@@ -244,19 +174,27 @@ pub(self) fn into_decoded(value: Vec<u8>) -> String {
 #[cfg(feature = "nightly")]
 // TODO: fix this; use test/bench api
 // this module benchmarks different versions of the deduce_encoding Decoder function
-mod bench_decode_encoding {
+mod bench_deduce_encoding {
     extern crate test;
     use test::Bencher;
 
+    // BUG this string breaks guess_encoding for base32hex
     const DATA: &str = "io8yyioljb";
+
+    // BUG this string breaks deduce_encoding for base45
+    const DATA2: &str = "*IHO";
+
+    // BUG breaks guess_encoding for base32hex and base16
 
     // NOTE
     // new deduce function
+    // make function more robust
     // increased performance
     // fixed a bug where encoding cant be deduced for 32 hex encoding
     // but instead of deducing correctly (32hex) it now deduces to 32
     // this can't be helped as there are no chars from the extended hex table
     // that can allow for the deduction of the base as 32hex and not 32
+    // for now, in such cases, use force_decode
     #[bench]
     fn bench_deduce_012(b: &mut Bencher) {
         let encs = [
@@ -270,25 +208,6 @@ mod bench_decode_encoding {
         b.iter(|| {
             encs.iter().for_each(|e| {
                 crate::Decoder::deduce_encoding(&e).unwrap();
-            })
-        });
-    }
-
-    #[bench]
-    fn bench_guess_011(b: &mut Bencher) {
-        let encs = [
-            crate::Encoder::base64().encode(DATA),
-            crate::Encoder::base64_url().encode(DATA),
-            crate::Encoder::base45().encode(DATA),
-            crate::Encoder::base32().encode(DATA),
-            crate::Encoder::base32_hex().encode(DATA),
-            crate::Encoder::base16().encode(DATA),
-        ];
-        let dec = crate::Decoder::new();
-
-        b.iter(|| {
-            encs.iter().for_each(|e| {
-                dec.guess_encoding(&e).unwrap();
             })
         });
     }
