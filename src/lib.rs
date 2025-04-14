@@ -1,34 +1,52 @@
-// #![no_std]
+#![no_std]
+#![doc(html_playground_url = "https://play.rust-lang.org/?version=stable&mode=debug&edition=2024")]
+#![cfg_attr(feature = "nightly", feature(doc_auto_cfg))]
+#![cfg_attr(feature = "nightly", feature(test))]
 
 mod base_transformer;
 pub(crate) use base_transformer::BaseTransformer;
 
-pub mod decoders;
-pub mod encoders;
+mod decoders;
+mod encoders;
 
+pub use decoders::DecodeError;
 pub use decoders::Decoder;
 pub use encoders::Encoder;
 
-pub use decoders::base45::base45_decode;
-pub use encoders::base45::base45_encode;
+pub(crate) const PAD: char = '=';
 
-pub const PAD: char = '=';
-
-pub const B64: Base = Base::_64;
-pub const B64URL: Base = Base::_64URL;
-pub const B32: Base = Base::_32;
-pub const B32HEX: Base = Base::_32HEX;
-pub const B16: Base = Base::_16;
-pub const B45: Base = Base::_45;
+pub const BASE64: Base = Base::_64;
+pub const BASE64URL: Base = Base::_64URL;
+pub const BASE32: Base = Base::_32;
+pub const BASE32HEX: Base = Base::_32HEX;
+pub const BASE16: Base = Base::_16;
+pub const BASE45: Base = Base::_45;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Base {
-    _45,
     _64,
     _64URL,
+    _45,
     _32,
     _32HEX,
     _16,
+}
+
+impl core::fmt::Display for Base {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::_64 => "Base64",
+                Self::_64URL => "Base64URL",
+                Self::_45 => "Base45",
+                Self::_32 => "Base32",
+                Self::_32HEX => "Base32HEX",
+                Self::_16 => "Base16",
+            }
+        )
+    }
 }
 
 impl Base {
@@ -62,7 +80,7 @@ impl Base {
     }
 }
 
-pub fn char_from_idx(idx: u8, base: Base) -> char {
+pub(crate) fn char_from_idx(idx: u8, base: &Base) -> char {
     match idx {
         // alpha
         0 if base.alpha_26() => 'A',
@@ -130,12 +148,12 @@ pub fn char_from_idx(idx: u8, base: Base) -> char {
         61 if base.is_any_64() => '9',
 
         // NOTE base 64 is done with this
-        62 if base == Base::_64 => '+',
-        63 if base == Base::_64 => '/',
+        62 if base == &Base::_64 => '+',
+        63 if base == &Base::_64 => '/',
 
         // NOTE base 64 url is done with this
-        62 if base == Base::_64URL => '-',
-        63 if base == Base::_64URL => '_',
+        62 if base == &Base::_64URL => '-',
+        63 if base == &Base::_64URL => '_',
 
         // NOTE base 32 is done with tihs
         26 if base.is_32() => '2',
@@ -200,7 +218,7 @@ pub fn char_from_idx(idx: u8, base: Base) -> char {
     }
 }
 
-pub fn idx_from_char(chr: char, base: &Base) -> u8 {
+pub(crate) fn idx_from_char(chr: char, base: &Base) -> u8 {
     match chr {
         // alpha
         'A' if base.alpha_26() => 0,
@@ -389,4 +407,14 @@ pub(self) mod char_checks {
             || is_base16(c)
             || (is_base32_hex(c) && c != '=')
     }
+}
+
+pub(crate) mod makura_alloc {
+    extern crate alloc;
+    pub(crate) use alloc::string::String;
+    pub(crate) use alloc::vec::Vec;
+}
+
+pub(crate) mod makura_core {
+    pub(crate) use core::ops;
 }

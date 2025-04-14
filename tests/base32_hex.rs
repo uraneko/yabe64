@@ -1,5 +1,5 @@
 mod encoder {
-    use yabe64::Encoder;
+    use makura::Encoder;
 
     #[test]
     fn test0() {
@@ -57,15 +57,18 @@ mod encoder {
 }
 
 mod decoder {
-    use yabe64::B32HEX;
-    use yabe64::Decoder;
+    use makura::BASE32HEX;
+    use makura::Decoder;
 
     #[test]
     fn test0() {
         let input = "f";
         let output = "CO======";
 
-        assert_eq!(Decoder::new().hint(B32HEX).decode(output), input);
+        assert_eq!(
+            Decoder::new().hint(BASE32HEX).decode(output).unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -73,7 +76,10 @@ mod decoder {
         let input = "fo";
         let output = "CPNG====";
 
-        assert_eq!(Decoder::new().hint(B32HEX).decode(output), input);
+        assert_eq!(
+            Decoder::new().hint(BASE32HEX).decode(output).unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -81,7 +87,10 @@ mod decoder {
         let input = "foo";
         let output = "CPNMU===";
 
-        assert_eq!(Decoder::new().hint(B32HEX).decode(output), input);
+        assert_eq!(
+            Decoder::new().hint(BASE32HEX).decode(output).unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -89,7 +98,10 @@ mod decoder {
         let input = "foob";
         let output = "CPNMUOG=";
 
-        assert_eq!(Decoder::new().hint(B32HEX).decode(output), input);
+        assert_eq!(
+            Decoder::new().hint(BASE32HEX).decode(output).unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -97,7 +109,10 @@ mod decoder {
         let input = "fooba";
         let output = "CPNMUOJ1";
 
-        assert_eq!(Decoder::new().hint(B32HEX).decode(output), input);
+        assert_eq!(
+            Decoder::new().hint(BASE32HEX).decode(output).unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -105,6 +120,9 @@ mod decoder {
         let input = "foobar";
         let output = "CPNMUOJ1E8======";
 
-        assert_eq!(Decoder::new().hint(B32HEX).decode(output), input);
+        assert_eq!(
+            Decoder::new().hint(BASE32HEX).decode(output).unwrap(),
+            input
+        );
     }
 }

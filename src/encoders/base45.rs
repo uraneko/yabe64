@@ -1,6 +1,8 @@
-use crate::{Base, PAD, char_from_idx};
+#![cfg(feature = "base45")]
+use crate::makura_alloc::{String, Vec};
 
-const BASE45: Base = Base::_45;
+use crate::BASE45;
+use crate::char_from_idx;
 
 /// separates the input string into chunks of 16bits
 // TODO rename chunk_and_cast
@@ -44,8 +46,8 @@ fn into_base45_bytes(bytes: Vec<u16>) -> Vec<u8> {
     // let mut last = bytes.next_back().unwrap();
 
     bytes
+        // .inspect(|b| println!("{}", b))
         .map(|b| {
-            println!("{}", b);
             let mut transformer = crate::BaseTransformer::new(45, b);
             transformer.transform_all();
 
@@ -53,24 +55,24 @@ fn into_base45_bytes(bytes: Vec<u16>) -> Vec<u8> {
             if seq.len() == 1 {
                 seq.push(0);
             }
-            println!("{:?}", seq);
 
             seq
         })
+        // .inspect(|seq| println!("{:?}", seq))
         .flatten()
         .collect()
 }
 
 fn into_base45(bytes: Vec<u8>) -> String {
     let bytes = bytes.into_iter();
-    let encoded = bytes.map(|b| char_from_idx(b, BASE45)).collect::<String>();
+    let encoded = bytes.map(|b| char_from_idx(b, &BASE45)).collect::<String>();
 
     encoded
 }
 
 pub fn base45_encode<T>(value: T) -> String
 where
-    T: AsRef<str> + Into<String>,
+    T: AsRef<str>,
 {
     let value = value.as_ref();
     if value.is_empty() {

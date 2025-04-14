@@ -1,7 +1,8 @@
-use crate::{Base, char_from_idx};
+#![cfg(any(feature = "base32", feature = "base32_hex"))]
+use crate::makura_alloc::{String, Vec};
 
-const BASE32: Base = Base::_32;
-const BASE32HEX: Base = Base::_32HEX;
+use crate::char_from_idx;
+use crate::{BASE32, BASE32HEX};
 
 /// DOCS
 /// Special processing is performed if fewer than 40 bits are available
@@ -108,7 +109,7 @@ fn into_base32(bytes: Vec<u8>) -> String {
                 '='
             } else {
                 pad = false;
-                char_from_idx(b, BASE32)
+                char_from_idx(b, &BASE32)
             }
         })
         .collect::<Vec<char>>()
@@ -117,9 +118,34 @@ fn into_base32(bytes: Vec<u8>) -> String {
         .collect()
 }
 
+fn into_base32_hex(bytes: Vec<u8>) -> String {
+    let bytes = bytes.into_iter();
+
+    // FIXME the table needs to have all values
+    let mut cd = 6;
+    let mut pad = true;
+    bytes
+        .rev()
+        // .inspect(|b| println!("{}", b))
+        .map(|b| {
+            if cd > 0 && pad && b == 0 {
+                cd -= 1;
+                '='
+            } else {
+                pad = false;
+                char_from_idx(b, &BASE32HEX)
+            }
+        })
+        .collect::<Vec<char>>()
+        .into_iter()
+        .rev()
+        .collect()
+}
+
+#[cfg(feature = "base32")]
 pub fn base32_encode<T>(value: T) -> String
 where
-    T: AsRef<str> + Into<String>,
+    T: AsRef<str>,
 {
     let value = value.as_ref();
     if value.is_empty() {
@@ -132,33 +158,10 @@ where
     into_base32(bytes)
 }
 
-fn into_base32_hex(bytes: Vec<u8>) -> String {
-    let bytes = bytes.into_iter();
-
-    // FIXME the table needs to have all values
-    let mut cd = 6;
-    let mut pad = true;
-    bytes
-        .rev()
-        .inspect(|b| println!("{}", b))
-        .map(|b| {
-            if cd > 0 && pad && b == 0 {
-                cd -= 1;
-                '='
-            } else {
-                pad = false;
-                char_from_idx(b, BASE32HEX)
-            }
-        })
-        .collect::<Vec<char>>()
-        .into_iter()
-        .rev()
-        .collect()
-}
-
+#[cfg(feature = "base32_hex")]
 pub fn base32_hex_encode<T>(value: T) -> String
 where
-    T: AsRef<str> + Into<String>,
+    T: AsRef<str>,
 {
     let value = value.as_ref();
     if value.is_empty() {

@@ -1,5 +1,5 @@
 mod encoder {
-    use yabe64::Encoder;
+    use makura::Encoder;
 
     #[test]
     fn test0() {
@@ -32,14 +32,13 @@ mod encoder {
 }
 
 mod decoder {
-    use yabe64::B45;
-    use yabe64::Decoder;
+    use makura::Decoder;
 
     #[test]
     fn test0() {
-        let input = "QED8WEX0";
-        let output = "ietf!";
+        let output = "QED8WEX0";
+        let input = "ietf!";
 
-        assert_eq!(Decoder::new().decode(input), output);
+        assert_eq!(Decoder::new().decode(output).unwrap(), input);
     }
 }

@@ -1,7 +1,8 @@
-use super::Base;
-use super::{into_decoded, into_table_idx};
+#![cfg(feature = "base45")]
+use crate::makura_alloc::{String, Vec};
 
-const BASE45: Base = Base::_45;
+use super::{into_decoded, into_table_idx};
+use crate::BASE45;
 
 fn into_base45_values(bytes: Vec<u8>) -> Vec<u16> {
     let mut chunks = bytes.chunks(3);
@@ -47,11 +48,8 @@ fn into_base265_values(value: Vec<u16>) -> Vec<u8> {
 
 pub fn base45_decode(value: &str) -> String {
     let indices = into_table_idx(value, &BASE45);
-    println!(">{:?}", indices);
     let bytes = into_base45_values(indices);
-    println!(">{:?}", bytes);
     let bytes = into_base265_values(bytes);
-    println!(">{:?}", bytes);
 
     into_decoded(bytes)
 }

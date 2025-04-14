@@ -1,3 +1,7 @@
+#![cfg(feature = "base45")]
+use crate::makura_alloc::Vec;
+use crate::makura_core::ops;
+
 pub(crate) struct BaseTransformer {
     base: u8,
     value: u64,
@@ -5,14 +9,11 @@ pub(crate) struct BaseTransformer {
 }
 
 impl BaseTransformer {
-    pub(crate) fn new(
-        base: u8,
-        value: impl std::ops::Shl + std::ops::MulAssign + Into<u64>,
-    ) -> Self {
+    pub(crate) fn new(base: u8, value: impl ops::Shl + ops::MulAssign + Into<u64>) -> Self {
         Self {
             base,
             value: value.into(),
-            seq: vec![],
+            seq: Vec::new(),
         }
     }
 

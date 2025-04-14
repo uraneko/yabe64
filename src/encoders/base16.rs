@@ -1,6 +1,8 @@
-use crate::{Base, PAD, char_from_idx};
+#![cfg(feature = "base16")]
+use crate::makura_alloc::{String, Vec};
 
-const BASE16: Base = Base::_16;
+use crate::BASE16;
+use crate::char_from_idx;
 
 /// separates the input string into chunks of 24bits
 fn into_octets(data: &str) -> Vec<u8> {
@@ -17,13 +19,13 @@ fn into_4bits_bytes(bytes: Vec<u8>) -> Vec<u8> {
 fn into_base16(bytes: Vec<u8>) -> String {
     bytes
         .into_iter()
-        .map(|b| char_from_idx(b, BASE16))
+        .map(|b| char_from_idx(b, &BASE16))
         .collect::<String>()
 }
 
 pub fn base16_encode<T>(value: T) -> String
 where
-    T: AsRef<str> + Into<String>,
+    T: AsRef<str>,
 {
     let value = value.as_ref();
     if value.is_empty() {
