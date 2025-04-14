@@ -1,4 +1,6 @@
 #![cfg(feature = "decoding")]
+use crate::makura_alloc::{String, Vec};
+
 use super::char_checks::*;
 use super::{Base, idx_from_char};
 

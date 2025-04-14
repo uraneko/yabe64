@@ -1,20 +1,8 @@
 #![cfg(any(feature = "base64", feature = "base64_url"))]
+use crate::makura_alloc::{String, Vec};
+
 use crate::{BASE64, BASE64URL};
 use crate::{PAD, char_from_idx};
-
-/// DOCS
-/// last 3 octets
-/// (1) The final quantum of encoding input is an integral multiple of 24
-///     bits; here, the final unit of encoded output will be an integral
-///     multiple of 4 characters with no "=" padding.
-///
-/// (2) The final quantum of encoding input is exactly 8 bits; here, the
-///     final unit of encoded output will be two characters followed by
-///     two "=" padding characters.
-///
-/// (3) The final quantum of encoding input is exactly 16 bits; here, the
-///     final unit of encoded output will be three characters followed by
-///     one "=" padding character.
 
 /// separates the input string into chunks of 24bits
 fn into_24bits_chunks(data: &str) -> Vec<u32> {

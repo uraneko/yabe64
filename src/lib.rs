@@ -1,4 +1,4 @@
-// #![no_std]
+#![no_std]
 #![doc(html_playground_url = "https://play.rust-lang.org/?version=stable&mode=debug&edition=2024")]
 #![cfg_attr(feature = "nightly", feature(doc_auto_cfg))]
 
@@ -31,8 +31,8 @@ pub enum Base {
     _16,
 }
 
-impl std::fmt::Display for Base {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for Base {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(
             f,
             "{}",
@@ -406,4 +406,14 @@ pub(self) mod char_checks {
             || is_base16(c)
             || (is_base32_hex(c) && c != '=')
     }
+}
+
+pub(crate) mod makura_alloc {
+    extern crate alloc;
+    pub(crate) use alloc::string::String;
+    pub(crate) use alloc::vec::Vec;
+}
+
+pub(crate) mod makura_core {
+    pub(crate) use core::ops;
 }

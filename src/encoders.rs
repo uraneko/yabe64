@@ -1,4 +1,6 @@
 #![cfg(feature = "encoding")]
+use crate::makura_alloc::{String, Vec};
+
 use super::Base;
 
 mod base16;

@@ -1,4 +1,6 @@
 #![cfg(feature = "base45")]
+use crate::makura_alloc::{String, Vec};
+
 use super::{into_decoded, into_table_idx};
 use crate::BASE45;
 
