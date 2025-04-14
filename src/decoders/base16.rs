@@ -1,6 +1,6 @@
-use super::Base;
+#![cfg(feature = "base16")]
 use super::{into_decoded, into_table_idx};
-use crate::B16;
+use crate::BASE16;
 
 fn into_8bits_bytes(value: Vec<u8>) -> Vec<u8> {
     value
@@ -17,7 +17,7 @@ fn into_8bits_bytes(value: Vec<u8>) -> Vec<u8> {
 }
 
 pub fn base16_decode(value: &str) -> String {
-    let indices = into_table_idx(value, &B16);
+    let indices = into_table_idx(value, &BASE16);
     let bytes = into_8bits_bytes(indices);
 
     into_decoded(bytes)

@@ -1,4 +1,3 @@
-use makura::base45_decode;
 use makura::decoders::Decoder;
 use std::io::BufReader;
 use std::io::{Read, stdin};
@@ -10,6 +9,6 @@ fn main() {
         return;
     }
 
-    println!("{}", base45_decode(&data));
+    println!("{}", Decoder::new().decode(&data));
     // println!("{}", Decoder::new().decode(data));
 }

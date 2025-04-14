@@ -32,7 +32,6 @@ mod encoder {
 }
 
 mod decoder {
-    use makura::B45;
     use makura::Decoder;
 
     #[test]

@@ -1,6 +1,6 @@
-use crate::{Base, PAD, char_from_idx};
-
-const BASE45: Base = Base::_45;
+#![cfg(feature = "base45")]
+use crate::BASE45;
+use crate::char_from_idx;
 
 /// separates the input string into chunks of 16bits
 // TODO rename chunk_and_cast
@@ -63,7 +63,7 @@ fn into_base45_bytes(bytes: Vec<u16>) -> Vec<u8> {
 
 fn into_base45(bytes: Vec<u8>) -> String {
     let bytes = bytes.into_iter();
-    let encoded = bytes.map(|b| char_from_idx(b, BASE45)).collect::<String>();
+    let encoded = bytes.map(|b| char_from_idx(b, &BASE45)).collect::<String>();
 
     encoded
 }

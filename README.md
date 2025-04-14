@@ -43,13 +43,15 @@ cargo add maukra
 By default, makura is a library crate, but it can be installed as a binary cli tool by enabling the bin feature.
 
 ```sh
-cargo install makura --locked --features bin --features all_bases --features encoding/decoding
+cargo install makura --locked --features "binary all_bases encoding/decoding"
 ```
 ##### CLI Features
 The functionality of the cli is dependant upon the features that were passed at the time of the installation.
 The 'bin' feature is alawys mandatory for installing the cli tool. 
 Other than that, the installer needs to specify base features and functionality features.
-Base features are what bases you want, e.g., (base 32 and base 45) --features base32 --features base45
+
+Base features are what bases you want, e.g., (base 32 and base 45) --features "base32 base45"
+
 Functionality features are what functionalities you want: 
 encoding only (--features encoding), decoding only (--features decoding) or both (--features encoding/decoding) 
 
