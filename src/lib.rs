@@ -1,6 +1,7 @@
 #![no_std]
 #![doc(html_playground_url = "https://play.rust-lang.org/?version=stable&mode=debug&edition=2024")]
 #![cfg_attr(feature = "nightly", feature(doc_auto_cfg))]
+#![cfg_attr(feature = "nightly", feature(test))]
 
 mod base_transformer;
 pub(crate) use base_transformer::BaseTransformer;

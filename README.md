@@ -25,7 +25,8 @@ Makura is an implementation of various base encodings. It mostly impls these 2 r
 | 45	 | ✓ | ✓ |
 | 32	 | ✓ | ✓ |
 | 32 hex | ✓ | ✓ |
-| 16	 | ✓ | ✓ |	  
+| 16	 | ✓ | ✓ |
+| custom | ✗ | ✗ |
 
 ###
 ### Usage (wip)
@@ -40,14 +41,14 @@ cargo add maukra
 ####
 #### Binary 
 
-By default, makura is a library crate, but it can be installed as a binary cli tool by enabling the bin feature.
+By default, makura is a library crate, but it can be installed as a binary cli tool by enabling the binary feature.
 
 ```sh
 cargo install makura --locked --features "binary all_bases encoding/decoding"
 ```
 ##### CLI Features
 The functionality of the cli is dependant upon the features that were passed at the time of the installation.
-The 'bin' feature is alawys mandatory for installing the cli tool. 
+The 'binary' feature is alawys mandatory for installing the cli tool. 
 Other than that, the installer needs to specify base features and functionality features.
 
 Base features are what bases you want, e.g., (base 32 and base 45) --features "base32 base45"
