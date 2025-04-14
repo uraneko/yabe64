@@ -1,3 +1,5 @@
+#![cfg(feature = "base45")]
+
 pub(crate) struct BaseTransformer {
     base: u8,
     value: u64,

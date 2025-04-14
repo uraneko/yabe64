@@ -1,4 +1,4 @@
-use makura::decoders::Decoder;
+use makura::Decoder;
 use std::io::BufReader;
 use std::io::{Read, stdin};
 

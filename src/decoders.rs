@@ -1,17 +1,18 @@
+#![cfg(any(feature = "decoding", feature = "encoding_decoding"))]
 use super::char_checks::*;
 use super::{Base, idx_from_char};
 
-pub mod base16;
-pub mod base32;
-pub mod base45;
-pub mod base64;
+mod base16;
+mod base32;
+mod base45;
+mod base64;
 
-pub use base16::base16_decode;
-pub use base32::base32_decode;
-pub use base32::base32_hex_decode;
-pub use base45::base45_decode;
-pub use base64::base64_decode;
-pub use base64::base64_url_decode;
+use base16::base16_decode;
+use base32::base32_decode;
+use base32::base32_hex_decode;
+use base45::base45_decode;
+use base64::base64_decode;
+use base64::base64_url_decode;
 
 use crate::{BASE16, BASE32, BASE32HEX, BASE45, BASE64, BASE64URL};
 

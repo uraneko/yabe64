@@ -21,6 +21,8 @@ name = "base45"
 path = "tests/base45.rs"
 
 [features]
+default = ["bases_all", "encoding_decoding"]
+
 # std = ["alloc"]
 # alloc = []
 

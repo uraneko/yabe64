@@ -1,9 +1,10 @@
+#![cfg(any(feature = "encoding", feature = "encoding_decoding"))]
 use super::Base;
 
-pub mod base16;
-pub mod base32;
-pub mod base45;
-pub mod base64;
+mod base16;
+mod base32;
+mod base45;
+mod base64;
 
 use base16::base16_encode;
 use base32::base32_encode;
