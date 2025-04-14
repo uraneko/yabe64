@@ -1,4 +1,4 @@
-#![cfg(any(feature = "encoding", feature = "encoding_decoding"))]
+#![cfg(feature = "encoding")]
 use super::Base;
 
 mod base16;
@@ -60,11 +60,12 @@ impl Encoder {
         Self { base: Base::_16 }
     }
 
-    /// apply self's base encoding to passed value argument
-    /// value can be anything that implements AsRef<str> (as_str method)
-    /// including an &str. an owned String or a Cow<str>
-    /// this method always returns a string
-    /// if an empty string is given, then an empty string is returned
+    /// Apply self's base encoding to passed value argument.
+    /// Value can be anything that implements `AsRef<str>`;
+    /// including an `&str`, an owned `String` or a `Cow<str>`
+    ///
+    /// This method always returns a string,
+    /// passing an empty string results in a an empty `String` return value
     pub fn encode(&self, value: impl AsRef<str>) -> String {
         match self.base {
             Base::_64 => base64_encode(value),

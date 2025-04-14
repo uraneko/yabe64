@@ -11,6 +11,7 @@ fn main() {
     let data: String = data.to_string();
     let data: &str = &data;
 
-    println!("{}", makura::Encoder::base64().encode(data));
-    // println!("{}", makura::Decoder::new().decode(data));
+    // println!("{}", makura::Encoder::base64().encode(data));
+    println!("{}", makura::Encoder::base32().encode(data));
+    println!("{}", makura::Encoder::base32_hex().encode(data));
 }
