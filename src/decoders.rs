@@ -45,7 +45,7 @@ impl Decoder {
     /// this may panic, so may the normal decode method tho
     /// use this when you already know for sure the input string encoding and
     /// want to bypass the encoding guessing step
-    pub fn force_decode(value: impl AsRef<str> + Into<String>, base: Base) -> String {
+    pub fn force_decode(value: impl AsRef<str>, base: Base) -> String {
         let value = value.as_ref();
         if value.is_empty() {
             return "".into();
@@ -61,7 +61,7 @@ impl Decoder {
         }
     }
 
-    pub fn decode(&self, value: impl AsRef<str> + Into<String>) -> String {
+    pub fn decode(&self, value: impl AsRef<str>) -> String {
         let value = value.as_ref();
         if value.is_empty() {
             return "".into();
@@ -72,7 +72,6 @@ impl Decoder {
             panic!("{:?}", e);
         }
         let base = base.unwrap();
-        println!("{:?}", base);
 
         match base {
             BASE64 => base64_decode(value),
@@ -84,9 +83,18 @@ impl Decoder {
         }
     }
 
-    // deduces the string encoding by process of elimination
-    // FIXME breaks on newly added base 45 decoding
-    pub(self) fn guess_encoding(&self, value: &str) -> Result<Base, DecodeError> {
+    /// deduces the string encoding by process of elimination
+    ///
+    /// takes a base encoded string
+    ///
+    /// returns an 'Ok(Base)' if no errors were found and a base was guessed safely
+    ///
+    /// or an 'Err(DecodeError)' if
+    ///
+    /// - a base was deduced but string contains char(s) that don't belong to that base table
+    ///
+    /// - a base couldn't be deduced
+    pub fn guess_encoding(&self, value: &str) -> Result<Base, DecodeError> {
         let len = value.len();
         let chars = value.chars();
         let is_64 = chars.clone().any(|c| c.is_ascii_lowercase())
@@ -101,7 +109,6 @@ impl Decoder {
                 // base 64 url decode
                 true => {
                     return if chars.clone().any(|c| !is_base64_url(c)) {
-                        println!("64url");
                         Err(DecodeError::EncodedStringIsCorrupt)
                     } else {
                         Ok(Base::_64URL)
@@ -110,7 +117,6 @@ impl Decoder {
                 // base 64 decode
                 false => {
                     return if chars.clone().any(|c| !is_base64_normal(c)) {
-                        println!("64");
                         Err(DecodeError::EncodedStringIsCorrupt)
                     } else {
                         Ok(Base::_64)

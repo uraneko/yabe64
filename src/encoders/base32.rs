@@ -124,7 +124,7 @@ fn into_base32_hex(bytes: Vec<u8>) -> String {
     let mut pad = true;
     bytes
         .rev()
-        .inspect(|b| println!("{}", b))
+        // .inspect(|b| println!("{}", b))
         .map(|b| {
             if cd > 0 && pad && b == 0 {
                 cd -= 1;
@@ -143,7 +143,7 @@ fn into_base32_hex(bytes: Vec<u8>) -> String {
 #[cfg(feature = "base32")]
 pub fn base32_encode<T>(value: T) -> String
 where
-    T: AsRef<str> + Into<String>,
+    T: AsRef<str>,
 {
     let value = value.as_ref();
     if value.is_empty() {
@@ -159,7 +159,7 @@ where
 #[cfg(feature = "base32_hex")]
 pub fn base32_hex_encode<T>(value: T) -> String
 where
-    T: AsRef<str> + Into<String>,
+    T: AsRef<str>,
 {
     let value = value.as_ref();
     if value.is_empty() {
