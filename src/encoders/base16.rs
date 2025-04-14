@@ -23,7 +23,7 @@ fn into_base16(bytes: Vec<u8>) -> String {
 
 pub fn base16_encode<T>(value: T) -> String
 where
-    T: AsRef<str> + Into<String>,
+    T: AsRef<str>,
 {
     let value = value.as_ref();
     if value.is_empty() {

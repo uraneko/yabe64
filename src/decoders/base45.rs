@@ -46,11 +46,8 @@ fn into_base265_values(value: Vec<u16>) -> Vec<u8> {
 
 pub fn base45_decode(value: &str) -> String {
     let indices = into_table_idx(value, &BASE45);
-    println!(">{:?}", indices);
     let bytes = into_base45_values(indices);
-    println!(">{:?}", bytes);
     let bytes = into_base265_values(bytes);
-    println!(">{:?}", bytes);
 
     into_decoded(bytes)
 }

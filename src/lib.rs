@@ -1,4 +1,6 @@
 // #![no_std]
+#![doc(html_playground_url = "https://play.rust-lang.org/?version=stable&mode=debug&edition=2024")]
+#![cfg_attr(feature = "nightly", feature(doc_auto_cfg))]
 
 mod base_transformer;
 pub(crate) use base_transformer::BaseTransformer;
@@ -20,12 +22,29 @@ pub const BASE45: Base = Base::_45;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Base {
-    _45,
     _64,
     _64URL,
+    _45,
     _32,
     _32HEX,
     _16,
+}
+
+impl std::fmt::Display for Base {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::_64 => "Base64",
+                Self::_64URL => "Base64URL",
+                Self::_45 => "Base45",
+                Self::_32 => "Base32",
+                Self::_32HEX => "Base32HEX",
+                Self::_16 => "Base16",
+            }
+        )
+    }
 }
 
 impl Base {

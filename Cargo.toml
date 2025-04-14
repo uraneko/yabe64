@@ -23,6 +23,8 @@ path = "tests/base45.rs"
 [features]
 default = ["bases_all", "encoding_decoding"]
 
+nightly = []
+
 # std = ["alloc"]
 # alloc = []
 

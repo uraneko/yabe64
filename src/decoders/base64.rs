@@ -23,7 +23,7 @@ fn into_24bits_bytes(value: Vec<u8>) -> Vec<u32> {
     // NOTE len must be an integra multiple of 4
     value
         .chunks(4)
-        .inspect(|c| println!("{:?}", c))
+        // .inspect(|c| println!("{:?}", c))
         .map(|b| {
             let mut mask = 0u32;
             mask |= b[0] as u32;

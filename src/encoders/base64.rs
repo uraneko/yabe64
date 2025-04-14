@@ -127,7 +127,7 @@ fn into_base64_url(bytes: Vec<u8>) -> String {
 #[cfg(feature = "base64")]
 pub fn base64_encode<T>(value: T) -> String
 where
-    T: AsRef<str> + Into<String>,
+    T: AsRef<str>,
 {
     let value = value.as_ref();
     if value.is_empty() {
@@ -143,7 +143,7 @@ where
 #[cfg(feature = "base64_url")]
 pub fn base64_url_encode<T>(value: T) -> String
 where
-    T: AsRef<str> + Into<String>,
+    T: AsRef<str>,
 {
     let value = value.as_ref();
     if value.is_empty() {
