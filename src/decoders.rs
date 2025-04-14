@@ -1,4 +1,4 @@
-#![cfg(any(feature = "decoding", feature = "encoding_decoding"))]
+#![cfg(feature = "decoding")]
 use super::char_checks::*;
 use super::{Base, idx_from_char};
 
@@ -16,35 +16,46 @@ use base64::base64_url_decode;
 
 use crate::{BASE16, BASE32, BASE32HEX, BASE45, BASE64, BASE64URL};
 
+#[derive(Debug)]
+pub enum DecodeError {
+    /// string was deduced to be base<x> encoded but contains char(s) that
+    /// don't belong to base<x>'s encoding table
+    EncodedStringIsCorrupt,
+    /// string encoding is not any of the implemented base encodings
+    /// i.e., it is not base 64, 64url, 45, 32, 32hex or 16 encoded
+    UnknownBaseEncodingIfAny,
+}
+
 // this only exists to match Encoder struct
 // otherwise a free function works fine
 pub struct Decoder {
     hint: Option<Base>,
 }
 
-#[derive(Debug)]
-pub enum DecodeError {
-    EncodedStringIsCorrupt,
-    StringIsNotBaseEncoded,
-    StringBaseMismatch,
-}
-
 impl Decoder {
+    /// creates a new decoder
     pub fn new() -> Self {
         Self {
             hint: Default::default(),
         }
     }
 
+    /// changes the Decoder's hint value to the passed base
     pub fn hint(mut self, base: Base) -> Self {
         self.hint = Some(base);
 
         self
     }
 
-    /// this may panic, so may the normal decode method tho
-    /// use this when you already know for sure the input string encoding and
-    /// want to bypass the encoding guessing step
+    /// decodes a given string
+    /// takes encoded string and base of the string encoding
+    /// returns decoded string value
+    ///
+    /// # Panic
+    /// panics if the value string's actual encoding doesn't match the passed base
+    ///
+    /// * use this method when you know your input string's encoding for sure
+    /// * otherwise, use decode method if not sure about the base encoding of the value string
     pub fn force_decode(value: impl AsRef<str>, base: Base) -> String {
         let value = value.as_ref();
         if value.is_empty() {
@@ -61,39 +72,44 @@ impl Decoder {
         }
     }
 
-    pub fn decode(&self, value: impl AsRef<str>) -> String {
+    /// decodes the given string
+    /// takes encoded string
+    /// returns `Ok(String)` value of decoded string at success
+    /// or `Err(DecodeError)` in case of failure
+    ///
+    /// # Error
+    /// errors when `guess_encoding` returns an error
+    ///
+    /// otherwise always returns Ok
+    pub fn decode(&self, value: impl AsRef<str>) -> Result<String, DecodeError> {
         let value = value.as_ref();
         if value.is_empty() {
-            return "".into();
+            return Ok("".into());
         }
 
-        let base = self.guess_encoding(value);
-        if let Err(e) = base {
-            panic!("{:?}", e);
-        }
-        let base = base.unwrap();
+        let base = match self.guess_encoding(value) {
+            Err(e) => return Err(e),
+            Ok(b) => b,
+        };
 
-        match base {
+        Ok(match base {
             BASE64 => base64_decode(value),
             BASE64URL => base64_url_decode(value),
             BASE45 => base45_decode(value),
             BASE32 => base32_decode(value),
             BASE32HEX => base32_hex_decode(value),
             BASE16 => base16_decode(value),
-        }
+        })
     }
 
-    /// deduces the string encoding by process of elimination
+    /// Deduces the string encoding by process of elimination. Takes a base encoded string.
     ///
-    /// takes a base encoded string
+    /// # Return
     ///
-    /// returns an 'Ok(Base)' if no errors were found and a base was guessed safely
+    /// returns an `Ok(Base)` if no errors were found and a base was guessed safely, or an `Err(DecodeError)` if:
     ///
-    /// or an 'Err(DecodeError)' if
-    ///
-    /// - a base was deduced but string contains char(s) that don't belong to that base table
-    ///
-    /// - a base couldn't be deduced
+    /// * a base was deduced but string contains char(s) that don't belong to that base table
+    /// * a base couldn't be deduced
     pub fn guess_encoding(&self, value: &str) -> Result<Base, DecodeError> {
         let len = value.len();
         let chars = value.chars();
@@ -146,7 +162,7 @@ impl Decoder {
             return Ok(Base::_16);
         }
 
-        Err(DecodeError::StringIsNotBaseEncoded)
+        Err(DecodeError::UnknownBaseEncodingIfAny)
     }
 }
 

@@ -8,6 +8,7 @@ pub(crate) use base_transformer::BaseTransformer;
 mod decoders;
 mod encoders;
 
+pub use decoders::DecodeError;
 pub use decoders::Decoder;
 pub use encoders::Encoder;
 

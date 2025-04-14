@@ -36,9 +36,9 @@ mod decoder {
 
     #[test]
     fn test0() {
-        let input = "QED8WEX0";
-        let output = "ietf!";
+        let output = "QED8WEX0";
+        let input = "ietf!";
 
-        assert_eq!(Decoder::new().decode(input), output);
+        assert_eq!(Decoder::new().decode(output).unwrap(), input);
     }
 }
