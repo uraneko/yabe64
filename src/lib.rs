@@ -3,13 +3,13 @@
 mod base_transformer;
 pub(crate) use base_transformer::BaseTransformer;
 
-pub mod decoders;
-pub mod encoders;
+mod decoders;
+mod encoders;
 
 pub use decoders::Decoder;
 pub use encoders::Encoder;
 
-pub const PAD: char = '=';
+pub(crate) const PAD: char = '=';
 
 pub const BASE64: Base = Base::_64;
 pub const BASE64URL: Base = Base::_64URL;
@@ -59,7 +59,7 @@ impl Base {
     }
 }
 
-pub fn char_from_idx(idx: u8, base: &Base) -> char {
+pub(crate) fn char_from_idx(idx: u8, base: &Base) -> char {
     match idx {
         // alpha
         0 if base.alpha_26() => 'A',
@@ -197,7 +197,7 @@ pub fn char_from_idx(idx: u8, base: &Base) -> char {
     }
 }
 
-pub fn idx_from_char(chr: char, base: &Base) -> u8 {
+pub(crate) fn idx_from_char(chr: char, base: &Base) -> u8 {
     match chr {
         // alpha
         'A' if base.alpha_26() => 0,
