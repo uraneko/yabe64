@@ -34,15 +34,20 @@ pub struct Decoder;
 
 impl Decoder {
     /// decodes a given string
-    /// takes encoded string and base of the string encoding
+    /// takes encoded string and user provided base of the string encoding
     /// returns decoded string value
     ///
     /// # Panic
-    /// panics if the value string's actual encoding doesn't match the passed base
+    /// panics if the decode function fails, which is when
+    /// the passed base is wrong and some characters in the real base encoded string
+    /// can't be decoded by the passed base's decode function
     ///
     /// * use this method when you know your input string's encoding for sure
     /// * otherwise, use decode method if not sure about the base encoding of the value string
-    pub fn force_decode(value: impl AsRef<str>, base: Base) -> String {
+    // NOTE was force_decode
+    // TODO make this function return a result
+    // this change needs to be made on the level of the into_table_idx function
+    pub fn decode(value: impl AsRef<str>, base: Base) -> String {
         let value = value.as_ref();
         if value.is_empty() {
             return "".into();
@@ -64,10 +69,11 @@ impl Decoder {
     /// or `Err(DecodeError)` in case of failure
     ///
     /// # Error
-    /// errors when `guess_encoding` returns an error
+    /// errors when `deduce_encoding` returns an error
     ///
     /// otherwise always returns Ok
-    pub fn decode(value: impl AsRef<str>) -> Result<String, DecodeError> {
+    // NOTE was decode
+    pub fn decode_deduce(value: impl AsRef<str>) -> Result<String, DecodeError> {
         let value = value.as_ref();
         if value.is_empty() {
             return Ok("".into());
@@ -168,7 +174,7 @@ pub(self) fn into_table_idx(value: &str, base: &Base) -> Vec<u8> {
 }
 
 pub(self) fn into_decoded(value: Vec<u8>) -> String {
-    value.into_iter().map(|c| c as char).collect()
+    String::from_utf8(value).unwrap()
 }
 
 #[cfg(feature = "nightly")]
@@ -184,7 +190,7 @@ mod bench_deduce_encoding {
     // BUG this string breaks deduce_encoding for base45
     const DATA2: &str = "*IHO";
 
-    // BUG breaks guess_encoding for base32hex and base16
+    // BUG breaks deduce_encoding for base32hex and base16
 
     // NOTE
     // new deduce function

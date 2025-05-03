@@ -11,31 +11,17 @@ fn main() {
     let data: String = data.to_string();
     let data: &str = &data;
 
-    println!("{:?}\n", data.as_bytes());
-
-    let enc = makura::Encoder::base64().encode(&data);
-    println!("{:?}", makura::Decoder::deduce_encoding(&enc));
-    println!("{:?}\n", makura::Decoder::decode(&enc));
-
     let enc = makura::Encoder::base64_url().encode(&data);
-    println!("{:?}", makura::Decoder::deduce_encoding(&enc));
-    println!("{:?}\n", makura::Decoder::decode(&enc));
 
-    let enc = makura::Encoder::base45().encode(&data);
-    println!("{:?}", makura::Decoder::deduce_encoding(&enc));
-    println!("{:?}\n", makura::Decoder::decode(&enc));
-
-    let enc = makura::Encoder::base32().encode(&data);
-    println!("{}", enc);
-    println!("{:?}", makura::Decoder::deduce_encoding(&enc));
-    println!("{:?}\n", makura::Decoder::decode(&enc));
-
-    let enc = makura::Encoder::base32_hex().encode(&data);
-    println!("{}", enc);
-    println!("{:?}", makura::Decoder::deduce_encoding(&enc));
-    println!("{:?}\n", makura::Decoder::decode(&enc));
-
-    let enc = makura::Encoder::base16().encode(&data);
-    println!("{:?}", makura::Decoder::deduce_encoding(&enc));
-    println!("{:?}\n", makura::Decoder::decode(&enc));
+    println!("data = {:?}", data);
+    println!("encoded = {:?}", enc);
+    println!("base = {:?}", makura::Decoder::deduce_encoding(&enc));
+    println!(
+        "decoded = {:?}",
+        makura::Decoder::decode(&enc, makura::BASE64URL)
+    );
+    println!(
+        "decoded (deduced) = {:?}",
+        makura::Decoder::decode_deduce(&enc)
+    );
 }
