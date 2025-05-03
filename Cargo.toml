@@ -2,11 +2,19 @@
 name = "makura"
 version = "0.1.1"
 edition = "2024"
-rust-version = "1.85.1"
+rust-version = "1.85.0"
 
 [[test]]
 name = "base64"
 path = "tests/base64.rs"
+
+[[test]]
+name = "base64_url"
+path = "tests/base64_url.rs"
+
+[[test]]
+name = "base45"
+path = "tests/base45.rs"
 
 [[test]]
 name = "base32"
@@ -17,8 +25,8 @@ name = "base32_hex"
 path = "tests/base32_hex.rs"
 
 [[test]]
-name = "base45"
-path = "tests/base45.rs"
+name = "base16"
+path = "tests/base16.rs"
 
 [features]
 default = ["bases_all", "encoding_decoding"]

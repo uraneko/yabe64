@@ -74,7 +74,7 @@ mod decoder {
         let input = "";
         let output = "";
 
-        assert_eq!(Decoder::decode(output).unwrap(), input);
+        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
     }
 
     #[test]
@@ -82,7 +82,7 @@ mod decoder {
         let input = "f";
         let output = "66";
 
-        assert_eq!(Decoder::new().decode(output).unwrap(), input);
+        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
     }
 
     #[test]
@@ -90,7 +90,7 @@ mod decoder {
         let input = "fo";
         let output = "666F";
 
-        assert_eq!(Decoder::new().decode(output).unwrap(), input);
+        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
     }
 
     #[test]
@@ -98,7 +98,7 @@ mod decoder {
         let input = "foo";
         let output = "666F6F";
 
-        assert_eq!(Decoder::new().decode(output).unwrap(), input);
+        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
     }
 
     #[test]
@@ -106,7 +106,7 @@ mod decoder {
         let input = "foob";
         let output = "666F6F62";
 
-        assert_eq!(Decoder::new().hint(BASE16).decode(output).unwrap(), input);
+        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
     }
 
     #[test]
@@ -114,7 +114,7 @@ mod decoder {
         let input = "fooba";
         let output = "666F6F6261";
 
-        assert_eq!(Decoder::new().decode(output).unwrap(), input);
+        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
     }
 
     #[test]
@@ -122,6 +122,6 @@ mod decoder {
         let input = "foobar";
         let output = "666F6F626172";
 
-        assert_eq!(Decoder::new().decode(output).unwrap(), input);
+        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
     }
 }

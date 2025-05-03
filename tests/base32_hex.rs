@@ -65,10 +65,7 @@ mod decoder {
         let input = "f";
         let output = "CO======";
 
-        assert_eq!(
-            Decoder::new().hint(BASE32HEX).decode(output).unwrap(),
-            input
-        );
+        assert_eq!(Decoder::decode(output, BASE32HEX), input);
     }
 
     #[test]
@@ -76,10 +73,7 @@ mod decoder {
         let input = "fo";
         let output = "CPNG====";
 
-        assert_eq!(
-            Decoder::new().hint(BASE32HEX).decode(output).unwrap(),
-            input
-        );
+        assert_eq!(Decoder::decode(output, BASE32HEX), input);
     }
 
     #[test]
@@ -87,10 +81,7 @@ mod decoder {
         let input = "foo";
         let output = "CPNMU===";
 
-        assert_eq!(
-            Decoder::new().hint(BASE32HEX).decode(output).unwrap(),
-            input
-        );
+        assert_eq!(Decoder::decode(output, BASE32HEX), input);
     }
 
     #[test]
@@ -98,10 +89,7 @@ mod decoder {
         let input = "foob";
         let output = "CPNMUOG=";
 
-        assert_eq!(
-            Decoder::new().hint(BASE32HEX).decode(output).unwrap(),
-            input
-        );
+        assert_eq!(Decoder::decode(output, BASE32HEX), input);
     }
 
     #[test]
@@ -109,10 +97,7 @@ mod decoder {
         let input = "fooba";
         let output = "CPNMUOJ1";
 
-        assert_eq!(
-            Decoder::new().hint(BASE32HEX).decode(output).unwrap(),
-            input
-        );
+        assert_eq!(Decoder::decode(output, BASE32HEX), input);
     }
 
     #[test]
@@ -120,9 +105,6 @@ mod decoder {
         let input = "foobar";
         let output = "CPNMUOJ1E8======";
 
-        assert_eq!(
-            Decoder::new().hint(BASE32HEX).decode(output).unwrap(),
-            input
-        );
+        assert_eq!(Decoder::decode(output, BASE32HEX), input);
     }
 }
