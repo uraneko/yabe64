@@ -13,7 +13,6 @@ Makura is an implementation of various base encodings. It mostly impls these 2 r
 - Usage
 - MSRV
 - License
-- Contributing
 
 ###
 ### Features

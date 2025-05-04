@@ -28,18 +28,28 @@ path = "tests/base32_hex.rs"
 name = "base16"
 path = "tests/base16.rs"
 
+[[bin]]
+name = "mkr"
+path = "src/main.rs"
+
 [features]
 default = ["bases_all", "encoding_decoding"]
 
+# for documentation, 
+# docs.rs builds documentations in nightly + crate features documentation need nightly to be built
 nightly = []
+# for logic that depends on std features 
+# the mkr bin for example needs this since it's a cli tool (stdio) 
+std = []
+# for logic that the mkr bin depends on 
+binary = ["std"]
 
-# std = ["alloc"]
-# alloc = []
-
+# for enabling decoding/encoding 
 decoding = []
 encoding = []
 encoding_decoding = ["encoding", "decoding"]
 
+# for enabling the default bases
 base64 = []
 base64_url = []
 base45 = []
