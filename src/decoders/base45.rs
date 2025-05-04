@@ -1,7 +1,7 @@
 #![cfg(feature = "base45")]
 use crate::makura_alloc::{String, Vec};
 
-use super::{into_decoded, into_table_idx};
+use super::{DecodeError, into_decoded, into_table_idx};
 use crate::BASE45;
 
 fn into_base45_values(bytes: Vec<u8>) -> Vec<u16> {
@@ -46,8 +46,12 @@ fn into_base265_values(value: Vec<u16>) -> Vec<u8> {
     bytes
 }
 
-pub fn base45_decode(value: &str) -> String {
+pub fn base45_decode(value: &str) -> Result<String, DecodeError> {
     let indices = into_table_idx(value, &BASE45);
+    if indices.is_err() {
+        return indices.map(|_| "".into());
+    }
+    let indices = indices.unwrap();
     let bytes = into_base45_values(indices);
     let bytes = into_base265_values(bytes);
 

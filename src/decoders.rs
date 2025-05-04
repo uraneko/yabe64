@@ -16,6 +16,7 @@ use base45::base45_decode;
 use base64::base64_decode;
 use base64::base64_url_decode;
 
+use crate::makura_alloc::FromUtf8Error;
 use crate::{BASE16, BASE32, BASE32HEX, BASE45, BASE64, BASE64URL};
 
 #[derive(Debug)]
@@ -26,6 +27,17 @@ pub enum DecodeError {
     /// string encoding is not any of the implemented base encodings
     /// i.e., it is not base 64, 64url, 45, 32, 32hex or 16 encoded
     UnknownBaseEncodingIfAny,
+    UnrecognizedCharForBase {
+        ch: char,
+        base: Base,
+    },
+    UnrecognizedIndexForBase {
+        idx: u8,
+        base: Base,
+    },
+    TableIndexOverflow(u8),
+    BaseEncodingHasNoPaddingChars(Base),
+    FromUtf8Error(FromUtf8Error),
 }
 
 // this only exists to match Encoder struct
@@ -35,22 +47,22 @@ pub struct Decoder;
 impl Decoder {
     /// decodes a given string
     /// takes encoded string and user provided base of the string encoding
-    /// returns decoded string value
     ///
-    /// # Panic
-    /// panics if the decode function fails, which is when
-    /// the passed base is wrong and some characters in the real base encoded string
-    /// can't be decoded by the passed base's decode function
+    /// returns a result of the decoded string value or a `DecodeError`
+    ///
+    /// # Error
+    /// returns an Err when the inner decode function returns an error,
+    /// which is when the passed encoded string and encoding base do not match
     ///
     /// * use this method when you know your input string's encoding for sure
-    /// * otherwise, use decode method if not sure about the base encoding of the value string
+    /// * otherwise, use decode_deduce method if not sure about the base encoding of the value string
+    ///
+    /// Note that `decode_deduce`'a deduction is not alawys correct
     // NOTE was force_decode
-    // TODO make this function return a result
-    // this change needs to be made on the level of the into_table_idx function
-    pub fn decode(value: impl AsRef<str>, base: Base) -> String {
+    pub fn decode(value: impl AsRef<str>, base: Base) -> Result<String, DecodeError> {
         let value = value.as_ref();
         if value.is_empty() {
-            return "".into();
+            return Ok("".into());
         }
 
         match base {
@@ -69,9 +81,10 @@ impl Decoder {
     /// or `Err(DecodeError)` in case of failure
     ///
     /// # Error
-    /// errors when `deduce_encoding` returns an error
+    /// returns an error when
+    /// * `deduce_encoding` returns an error
+    /// * the decode function returns an error that wasnt cought by `deduce_decoding`
     ///
-    /// otherwise always returns Ok
     // NOTE was decode
     pub fn decode_deduce(value: impl AsRef<str>) -> Result<String, DecodeError> {
         let value = value.as_ref();
@@ -84,14 +97,14 @@ impl Decoder {
             Ok(b) => b,
         };
 
-        Ok(match base {
+        match base {
             BASE64 => base64_decode(value),
             BASE64URL => base64_url_decode(value),
             BASE45 => base45_decode(value),
             BASE32 => base32_decode(value),
             BASE32HEX => base32_hex_decode(value),
             BASE16 => base16_decode(value),
-        })
+        }
     }
 
     // deduction methods
@@ -102,12 +115,19 @@ impl Decoder {
     // then encoding can be further deduced through patterns
     /// Deduces the string encoding by process of elimination. Takes a base encoded string.
     ///
-    /// # Return
+    /// # Error
     ///
     /// returns an `Ok(Base)` if no errors were found and a base was guessed safely, or an `Err(DecodeError)` if:
     ///
     /// * a base was deduced but string contains char(s) that don't belong to that base table
     /// * a base couldn't be deduced
+    ///
+    /// # Accuracy
+    ///
+    /// This function's deduction is not always correct for some bases,
+    /// an example of this is the integrated decoder tests for base32 hex at `tests/base32_hex.rs`,
+    /// some of those test function panic when using decode_deduce instead of decode with a passed
+    /// Base value
     pub fn deduce_encoding(value: &str) -> Result<Base, DecodeError> {
         let len = value.len();
         if value.contains(char::is_lowercase) {
@@ -162,19 +182,34 @@ impl Decoder {
 }
 
 // turns back chars from the encoding table to their table index values
-pub(self) fn into_table_idx(value: &str, base: &Base) -> Vec<u8> {
+pub(self) fn into_table_idx(value: &str, base: &Base) -> Result<Vec<u8>, DecodeError> {
     // no need for chars count, len is sufficient since all chars are ascii (1 byte)
-    value
-        .chars()
-        .map(|c| match c {
-            '=' => 0,
-            val => idx_from_char(val, base),
-        })
-        .collect::<Vec<u8>>()
+    // WARN they are not all ascii, baseless assumption
+    // but i cant recall what the line above is talking about
+    let val = value.chars().map(|c| match c {
+        '=' => {
+            if base == &BASE16 || base == &BASE45 {
+                Err(DecodeError::BaseEncodingHasNoPaddingChars(*base))
+            } else {
+                Ok(0)
+            }
+        }
+        val => idx_from_char(val, base),
+    });
+    if val.clone().any(|i| i.is_err()) {
+        return Err(DecodeError::BadEncodedString);
+    }
+
+    Ok(val.map(|i| i.unwrap()).collect::<Vec<u8>>())
 }
 
-pub(self) fn into_decoded(value: Vec<u8>) -> String {
-    String::from_utf8(value).unwrap()
+pub(self) fn into_decoded(value: Vec<u8>) -> Result<String, DecodeError> {
+    let res = String::from_utf8(value);
+    if res.is_ok() {
+        res.map_err(|_| DecodeError::BadEncodedString)
+    } else {
+        res.map_err(|e| DecodeError::FromUtf8Error(e))
+    }
 }
 
 #[cfg(feature = "nightly")]
