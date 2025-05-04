@@ -1,9 +1,5 @@
 #![cfg(feature = "base16")]
-use super::DecodeError;
-use crate::makura_alloc::{String, Vec};
-
-use super::{into_decoded, into_table_idx};
-use crate::BASE16;
+use crate::makura_alloc::Vec;
 
 fn into_8bits_bytes(value: Vec<u8>) -> Vec<u8> {
     value
@@ -19,13 +15,6 @@ fn into_8bits_bytes(value: Vec<u8>) -> Vec<u8> {
         .collect()
 }
 
-pub fn base16_decode(value: &str) -> Result<String, DecodeError> {
-    let indices = into_table_idx(value, &BASE16);
-    if indices.is_err() {
-        return indices.map(|_| "".into());
-    }
-    let indices = indices.unwrap();
-    let bytes = into_8bits_bytes(indices);
-
-    into_decoded(bytes)
+pub fn base16_decode(indices: Vec<u8>) -> Vec<u8> {
+    into_8bits_bytes(indices)
 }

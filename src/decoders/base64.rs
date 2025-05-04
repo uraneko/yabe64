@@ -1,8 +1,7 @@
 #![cfg(any(feature = "base64", feature = "base64_url"))]
-use crate::makura_alloc::{String, Vec};
+use crate::makura_alloc::Vec;
 
-use super::{DecodeError, into_decoded, into_table_idx};
-use crate::{BASE64, BASE64URL};
+use super::DecodeError;
 
 /// DOCS
 /// last 3 octets
@@ -62,27 +61,15 @@ fn into_8bits_bytes(value: Vec<u32>) -> Vec<u8> {
 }
 
 #[cfg(feature = "base64")]
-pub fn base64_decode(value: &str) -> Result<String, DecodeError> {
-    let indices = into_table_idx(value, &BASE64);
-    if indices.is_err() {
-        return indices.map(|_| "".into());
-    }
-    let indices = indices.unwrap();
+pub fn base64_decode(indices: Vec<u8>) -> Vec<u8> {
     let bytes = into_24bits_bytes(indices);
-    let bytes = into_8bits_bytes(bytes);
 
-    into_decoded(bytes)
+    into_8bits_bytes(bytes)
 }
 
 #[cfg(feature = "base64_url")]
-pub fn base64_url_decode(value: &str) -> Result<String, DecodeError> {
-    let indices = into_table_idx(value, &BASE64URL);
-    if indices.is_err() {
-        return indices.map(|_| "".into());
-    }
-    let indices = indices.unwrap();
+pub fn base64_url_decode(indices: Vec<u8>) -> Vec<u8> {
     let bytes = into_24bits_bytes(indices);
-    let bytes = into_8bits_bytes(bytes);
 
-    into_decoded(bytes)
+    into_8bits_bytes(bytes)
 }
