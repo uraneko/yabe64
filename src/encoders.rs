@@ -1,7 +1,8 @@
 #![cfg(feature = "encoding")]
-use crate::makura_alloc::{String, Vec};
+use crate::makura_alloc::String;
 
 use super::Base;
+use super::{BASE16, BASE32, BASE32HEX, BASE45, BASE64, BASE64URL};
 
 mod base16;
 mod base32;
@@ -76,6 +77,19 @@ impl Encoder {
             Base::_32 => base32_encode(value),
             Base::_32HEX => base32_hex_encode(value),
             Base::_16 => base16_encode(value),
+        }
+    }
+}
+
+impl From<Base> for Encoder {
+    fn from(value: Base) -> Self {
+        match value {
+            BASE64 => Encoder::base64(),
+            BASE64URL => Encoder::base64_url(),
+            BASE45 => Encoder::base45(),
+            BASE32 => Encoder::base32(),
+            BASE32HEX => Encoder::base32_hex(),
+            BASE16 => Encoder::base16(),
         }
     }
 }

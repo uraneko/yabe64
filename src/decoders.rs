@@ -1,5 +1,5 @@
 #![cfg(feature = "decoding")]
-use crate::makura_alloc::{String, Vec};
+use crate::makura_alloc::{String, Vec, vec};
 
 use super::{Base, idx_from_char};
 
@@ -28,6 +28,7 @@ pub enum DecodeError {
     /// doesn't fit the value length that the given base encoding should generate
     /// e.g., all base64 encoded strings should have a length that
     /// satisfies len % 4 == 0
+    ///
     /// .0 corresponds to the bad length value
     BadLenForBase(usize),
     /// string encoding is not any of the implemented base encodings
@@ -43,8 +44,7 @@ pub enum DecodeError {
     /// one or more encoded input vec bytes have a value greater that the base encoding's
     /// table max value
     /// e.g., a base64 encoded string bytes should all satisfy 0 < byte <= 63
-    /// .0 corresponds to the value that is not found in the encoding alphabet table
-    TableIndexOverflow(u8),
+    TableIndexOverflow { base: Base, value: u8 },
     /// when decoding an encoded string that is supposed to be of base 16 or 45
     /// both of which can not contain padding '=' chars
     /// yet a padding char was found at the end of the encoded string
@@ -111,10 +111,16 @@ impl Decoder {
     ///
     /// Note that `decode_deduce`'a deduction is not alawys correct
     // NOTE was force_decode
+    // TODO all decode functions need to add assert_encoding
+    // if it errors they error without decoding
     pub fn decode(value: impl AsRef<str>, base: Base) -> Result<String, DecodeError> {
         let value = value.as_ref();
         if value.is_empty() {
             return Ok("".into());
+        }
+        let correct_base = Self::assert_encoding(value.as_bytes(), &base);
+        if correct_base.is_err() {
+            return correct_base.map(|_| String::new());
         }
         let indices = Self::into_table_idx(value, &base);
         if indices.is_err() {
@@ -139,8 +145,6 @@ impl Decoder {
         if value.is_empty() {
             return Ok(Vec::new());
         }
-        // TODO check to assure bytes are correct
-        // if not then return error here
         let correct_base = Self::assert_encoding(&value, &base);
         if correct_base.is_err() {
             return correct_base.map(|_| Vec::new());
@@ -154,50 +158,6 @@ impl Decoder {
             BASE32HEX => base32_hex_decode(value),
             BASE16 => base16_decode(value),
         })
-    }
-
-    /// asserts that the given vec of bytes is encoded with the given base
-    pub fn assert_encoding(value: &[u8], base: &Base) -> Result<(), DecodeError> {
-        let max = *value.into_iter().max().unwrap();
-        let len = value.len();
-        match base {
-            Base::_64 | Base::_64URL => {
-                if max < 64 && len % 4 == 0 {
-                    Ok(())
-                } else if len % 4 == 0 {
-                    Err(DecodeError::TableIndexOverflow(max))
-                } else {
-                    Err(DecodeError::BadLenForBase(len))
-                }
-            }
-            Base::_45 => {
-                if max < 45 && len % 3 != 1 {
-                    Ok(())
-                } else if len % 3 != 1 {
-                    Err(DecodeError::TableIndexOverflow(max))
-                } else {
-                    Err(DecodeError::BadLenForBase(len))
-                }
-            }
-            Base::_32 | Base::_32HEX => {
-                if max < 32 && len % 8 == 0 {
-                    Ok(())
-                } else if len % 8 == 0 {
-                    Err(DecodeError::TableIndexOverflow(max))
-                } else {
-                    Err(DecodeError::BadLenForBase(len))
-                }
-            }
-            Base::_16 => {
-                if max < 16 && len % 2 == 0 {
-                    Ok(())
-                } else if len % 2 == 0 {
-                    Err(DecodeError::TableIndexOverflow(max))
-                } else {
-                    Err(DecodeError::BadLenForBase(len))
-                }
-            }
-        }
     }
 
     /// decodes the given string
@@ -216,10 +176,16 @@ impl Decoder {
         if value.is_empty() {
             return Ok("".into());
         }
+
         let base = match Self::deduce_encoding(value) {
             Err(e) => return Err(e),
             Ok(b) => b,
         };
+
+        let correct_base = Self::assert_encoding(value.as_bytes(), &base);
+        if correct_base.is_err() {
+            return correct_base.map(|_| String::new());
+        }
 
         let indices = Self::into_table_idx(value, &base);
         if indices.is_err() {
@@ -235,6 +201,106 @@ impl Decoder {
             BASE32HEX => base32_hex_decode(indices),
             BASE16 => base16_decode(indices),
         })
+    }
+
+    // pub fn decode_loop(value: impl AsRef<str>) -> Result<String, DecodeError> {
+    //     let value = value.as_ref();
+    //     if value.is_empty() {
+    //         return Ok("".into());
+    //     }
+    //
+    //     let mut base = match Self::deduce_encoding(value) {
+    //         Err(e) => return Err(e),
+    //         Ok(b) => b,
+    //     };
+    //
+    //     let mut correct_base = Self::assert_encoding(value.as_bytes(), &base);
+    //     let mut exclude = vec![base];
+    //     while correct_base.is_err() {
+    //         if exclude.len() == 6 {
+    //             break;
+    //         }
+    //         exclude.push(base);
+    //         base = match Self::deduce_exclude(value, exclude.as_slice()) {
+    //             Err(e) => return Err(e),
+    //             Ok(b) => b,
+    //         };
+    //         correct_base = Self::assert_encoding(value.as_bytes(), &base);
+    //     }
+    //     if correct_base.is_err() {
+    //         return correct_base.map(|_| String::new());
+    //     }
+    //
+    //     let indices = Self::into_table_idx(value, &base);
+    //     if indices.is_err() {
+    //         return indices.map(|_| "".into());
+    //     }
+    //     let indices = indices.unwrap();
+    //
+    //     Self::into_string(match base {
+    //         BASE64 => base64_decode(indices),
+    //         BASE64URL => base64_url_decode(indices),
+    //         BASE45 => base45_decode(indices),
+    //         BASE32 => base32_decode(indices),
+    //         BASE32HEX => base32_hex_decode(indices),
+    //         BASE16 => base16_decode(indices),
+    //     })
+    // }
+
+    /// asserts that the given vec of bytes is encoded with the given base
+    pub fn assert_encoding(value: &[u8], base: &Base) -> Result<(), DecodeError> {
+        let max = *value.into_iter().max().unwrap();
+        let len = value.len();
+        match base {
+            Base::_64 | Base::_64URL => {
+                if max < 64 && len % 4 == 0 {
+                    Ok(())
+                } else if len % 4 == 0 {
+                    Err(DecodeError::TableIndexOverflow {
+                        base: *base,
+                        value: max,
+                    })
+                } else {
+                    Err(DecodeError::BadLenForBase(len))
+                }
+            }
+            Base::_45 => {
+                if max < 45 && len % 3 != 1 {
+                    Ok(())
+                } else if len % 3 != 1 {
+                    Err(DecodeError::TableIndexOverflow {
+                        base: *base,
+                        value: max,
+                    })
+                } else {
+                    Err(DecodeError::BadLenForBase(len))
+                }
+            }
+            Base::_32 | Base::_32HEX => {
+                if max < 32 && len % 8 == 0 {
+                    Ok(())
+                } else if len % 8 == 0 {
+                    Err(DecodeError::TableIndexOverflow {
+                        base: *base,
+                        value: max,
+                    })
+                } else {
+                    Err(DecodeError::BadLenForBase(len))
+                }
+            }
+            Base::_16 => {
+                if max < 16 && len % 2 == 0 {
+                    Ok(())
+                } else if len % 2 == 0 {
+                    Err(DecodeError::TableIndexOverflow {
+                        base: *base,
+                        value: max,
+                    })
+                } else {
+                    Err(DecodeError::BadLenForBase(len))
+                }
+            }
+        }
     }
 
     // deduction methods
@@ -312,7 +378,7 @@ impl Decoder {
 
     // same as deduce_encoding but takes an additional exclude argument
     // that contains bases that are excluded from the deduction process
-    pub fn deduce_exclude(value: &str, exclude: impl BaseExclusion) -> Result<Base, DecodeError> {
+    pub fn deduce_exclude(value: &str, exclude: &[Base]) -> Result<Base, DecodeError> {
         let len = value.len();
         if value.contains(char::is_lowercase) && !exclude.are_excluded(&[BASE64, BASE64URL]) {
             if len % 4 != 0 {
@@ -374,35 +440,15 @@ trait BaseExclusion {
     fn is_excluded(&self, base: &Base) -> bool;
 
     fn are_excluded(&self, bases: &[Base]) -> bool;
-
-    fn is_single(&self) -> bool;
 }
 
-impl BaseExclusion for Base {
-    fn is_excluded(&self, base: &Base) -> bool {
-        self == base
-    }
-
-    fn are_excluded(&self, _: &[Base]) -> bool {
-        false
-    }
-
-    fn is_single(&self) -> bool {
-        true
-    }
-}
-
-impl BaseExclusion for Vec<Base> {
+impl BaseExclusion for &[Base] {
     fn is_excluded(&self, base: &Base) -> bool {
         self.contains(base)
     }
 
     fn are_excluded(&self, bases: &[Base]) -> bool {
         bases.into_iter().all(|b| self.contains(b))
-    }
-
-    fn is_single(&self) -> bool {
-        false
     }
 }
 
