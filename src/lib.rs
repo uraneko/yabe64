@@ -364,58 +364,58 @@ pub(crate) fn idx_from_char(chr: char, base: &Base) -> Result<u8, DecodeError> {
     }
 }
 
-pub(self) mod char_checks {
-
-    pub(crate) fn is_base64(chr: char) -> bool {
-        [
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
-            'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
-            'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
-            'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '=',
-        ]
-        .contains(&chr)
-    }
-
-    pub(crate) fn is_base64_url(chr: char) -> bool {
-        !['+', '/'].contains(&chr)
-    }
-
-    pub(crate) fn is_base64_normal(chr: char) -> bool {
-        !['-', '_'].contains(&chr)
-    }
-
-    pub(crate) fn is_base32(chr: char) -> bool {
-        [
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
-            'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '2', '3', '4', '5', '6', '7', '=',
-        ]
-        .contains(&chr)
-    }
-
-    pub(crate) fn is_base32_hex(chr: char) -> bool {
-        [
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-            'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', '=',
-        ]
-        .contains(&chr)
-    }
-
-    pub(crate) fn is_base16(chr: char) -> bool {
-        [
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
-        ]
-        .contains(&chr)
-    }
-
-    pub(crate) fn is_base45(c: char) -> bool {
-        [
-            'W', 'X', 'Y', 'Z', ' ', '$', '%', '*', '+', '-', '.', '/', ':',
-        ]
-        .contains(&c)
-            || is_base16(c)
-            || (is_base32_hex(c) && c != '=')
-    }
-}
+// pub(self) mod char_checks {
+//
+//     pub(crate) fn is_base64(chr: char) -> bool {
+//         [
+//             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+//             'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
+//             'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
+//             'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '=',
+//         ]
+//         .contains(&chr)
+//     }
+//
+//     pub(crate) fn is_base64_url(chr: char) -> bool {
+//         !['+', '/'].contains(&chr)
+//     }
+//
+//     pub(crate) fn is_base64_normal(chr: char) -> bool {
+//         !['-', '_'].contains(&chr)
+//     }
+//
+//     pub(crate) fn is_base32(chr: char) -> bool {
+//         [
+//             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+//             'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '2', '3', '4', '5', '6', '7', '=',
+//         ]
+//         .contains(&chr)
+//     }
+//
+//     pub(crate) fn is_base32_hex(chr: char) -> bool {
+//         [
+//             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+//             'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', '=',
+//         ]
+//         .contains(&chr)
+//     }
+//
+//     pub(crate) fn is_base16(chr: char) -> bool {
+//         [
+//             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
+//         ]
+//         .contains(&chr)
+//     }
+//
+//     pub(crate) fn is_base45(c: char) -> bool {
+//         [
+//             'W', 'X', 'Y', 'Z', ' ', '$', '%', '*', '+', '-', '.', '/', ':',
+//         ]
+//         .contains(&c)
+//             || is_base16(c)
+//             || (is_base32_hex(c) && c != '=')
+//     }
+// }
 
 pub(crate) mod makura_alloc {
     extern crate alloc;
