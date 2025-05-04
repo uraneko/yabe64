@@ -22,7 +22,7 @@ pub const BASE32HEX: Base = Base::_32HEX;
 pub const BASE16: Base = Base::_16;
 pub const BASE45: Base = Base::_45;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum Base {
     _64,
     _64URL,
@@ -30,6 +30,23 @@ pub enum Base {
     _32,
     _32HEX,
     _16,
+}
+
+impl core::fmt::Debug for Base {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::_64 => "Base64",
+                Self::_64URL => "Base64URL",
+                Self::_45 => "Base45",
+                Self::_32 => "Base32",
+                Self::_32HEX => "Base32HEX",
+                Self::_16 => "Base16",
+            }
+        )
+    }
 }
 
 impl core::fmt::Display for Base {
@@ -46,6 +63,22 @@ impl core::fmt::Display for Base {
                 Self::_16 => "Base16",
             }
         )
+    }
+}
+
+impl TryFrom<&str> for Base {
+    type Error = ();
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "64" => Ok(BASE64),
+            "64url" => Ok(BASE64URL),
+            "45" => Ok(BASE45),
+            "32" => Ok(BASE32),
+            "32hex" => Ok(BASE32HEX),
+            "16" => Ok(BASE16),
+            _ => Err(()),
+        }
     }
 }
 
@@ -420,7 +453,7 @@ pub(crate) fn idx_from_char(chr: char, base: &Base) -> Result<u8, DecodeError> {
 pub(crate) mod makura_alloc {
     extern crate alloc;
     pub(crate) use alloc::string::{FromUtf8Error, String};
-    pub(crate) use alloc::vec::Vec;
+    pub(crate) use alloc::{vec, vec::Vec};
 }
 
 pub(crate) mod makura_core {

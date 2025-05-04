@@ -30,7 +30,7 @@ path = "tests/base16.rs"
 
 [[bin]]
 name = "mkr"
-path = "src/main.rs"
+path = "src/mkr.rs"
 
 [features]
 default = ["bases_all", "encoding_decoding"]
