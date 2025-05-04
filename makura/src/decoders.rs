@@ -66,7 +66,7 @@ pub enum DecodeError {
 pub struct Decoder;
 
 impl Decoder {
-    pub fn into_string(value: Vec<u8>) -> Result<String, DecodeError> {
+    fn into_string(value: Vec<u8>) -> Result<String, DecodeError> {
         let res = String::from_utf8(value);
         if res.is_ok() {
             res.map_err(|_| DecodeError::BadEncodedString)
@@ -76,7 +76,7 @@ impl Decoder {
     }
 
     // turns back chars from the encoding table to their table index values
-    pub(self) fn into_table_idx(value: &str, base: &Base) -> Result<Vec<u8>, DecodeError> {
+    fn into_table_idx(value: &str, base: &Base) -> Result<Vec<u8>, DecodeError> {
         // no need for chars count, len is sufficient since all chars are ascii (1 byte)
         // WARN they are not all ascii, baseless assumption
         // but i cant recall what the line above is talking about

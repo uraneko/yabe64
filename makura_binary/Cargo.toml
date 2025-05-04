@@ -1,0 +1,11 @@
+[package]
+name = "makura_binary"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "mkr"
+path = "src/main.rs"
+
+[dependencies]
+makura = { version = "0.1.2", path = "../makura" }

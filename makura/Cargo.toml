@@ -1,0 +1,52 @@
+[package]
+name = "makura"
+version = "0.1.2"
+edition = "2024"
+rust-version = "1.85.0"
+
+[[test]]
+name = "base64"
+path = "tests/base64.rs"
+
+[[test]]
+name = "base64_url"
+path = "tests/base64_url.rs"
+
+[[test]]
+name = "base45"
+path = "tests/base45.rs"
+
+[[test]]
+name = "base32"
+path = "tests/base32.rs"
+
+[[test]]
+name = "base32_hex"
+path = "tests/base32_hex.rs"
+
+[[test]]
+name = "base16"
+path = "tests/base16.rs"
+
+[features]
+default = ["bases_all", "encoding_decoding"]
+
+# for documentation, 
+# docs.rs builds documentations in nightly + crate features documentation need nightly to be built
+nightly = []
+# for logic that depends on std features, currently there is none
+# std = []
+
+# for enabling decoding/encoding 
+decoding = []
+encoding = []
+encoding_decoding = ["encoding", "decoding"]
+
+# for enabling the default bases
+base64 = []
+base64_url = []
+base45 = []
+base32_hex = []
+base32 = []
+base16 = []
+bases_all = ["base64", "base64_url", "base45", "base32", "base32_hex", "base16"]

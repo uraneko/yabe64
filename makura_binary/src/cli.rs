@@ -31,8 +31,6 @@ impl CLIInput {
         Self::parse_args(stdin().is_terminal())
     }
 
-    // TODO decode_until_correct
-
     fn parse_args(is_term: bool) -> Self {
         let mut args = std::env::args();
         args.next();

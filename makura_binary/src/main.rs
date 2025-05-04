@@ -3,9 +3,6 @@ use std::io::{Read, stdin};
 
 use makura::{Decoder, Encoder};
 
-// TODO this is quirky
-// make it more erginimic
-#[path = "mkr/cli.rs"]
 mod cli;
 
 fn main() {
