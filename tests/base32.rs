@@ -109,7 +109,7 @@ mod decoder {
         let input = "fooba";
         let output = "MZXW6YTB";
         println!("{}", Decoder::deduce_encoding(output).unwrap());
-        assert_eq!(Decoder::decode(output, BASE32), input);
+        assert_eq!(Decoder::decode(output, BASE32).unwrap(), input);
     }
 
     #[test]

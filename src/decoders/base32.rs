@@ -1,7 +1,7 @@
 #![cfg(any(feature = "base32", feature = "base32_hex"))]
 use crate::makura_alloc::{String, Vec};
 
-use super::{into_decoded, into_table_idx};
+use super::{DecodeError, into_decoded, into_table_idx};
 use crate::{BASE32, BASE32HEX};
 
 /// DOCS
@@ -72,8 +72,12 @@ fn into_8bits_bytes(value: Vec<u64>) -> Vec<u8> {
 }
 
 #[cfg(feature = "base32")]
-pub fn base32_decode(value: &str) -> String {
+pub fn base32_decode(value: &str) -> Result<String, DecodeError> {
     let indices = into_table_idx(value, &BASE32);
+    if indices.is_err() {
+        return indices.map(|_| "".into());
+    }
+    let indices = indices.unwrap();
     let bytes = into_40bits_bytes(indices);
     let bytes = into_8bits_bytes(bytes);
 
@@ -81,8 +85,12 @@ pub fn base32_decode(value: &str) -> String {
 }
 
 #[cfg(feature = "base32_hex")]
-pub fn base32_hex_decode(value: &str) -> String {
+pub fn base32_hex_decode(value: &str) -> Result<String, DecodeError> {
     let indices = into_table_idx(value, &BASE32HEX);
+    if indices.is_err() {
+        return indices.map(|_| "".into());
+    }
+    let indices = indices.unwrap();
     let bytes = into_40bits_bytes(indices);
     let bytes = into_8bits_bytes(bytes);
 
