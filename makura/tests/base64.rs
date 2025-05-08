@@ -73,7 +73,10 @@ mod decoder {
         let input = "";
         let output = "";
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -81,7 +84,10 @@ mod decoder {
         let input = "f";
         let output = "Zg==";
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -89,7 +95,10 @@ mod decoder {
         let input = "fo";
         let output = "Zm8=";
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -97,7 +106,10 @@ mod decoder {
         let input = "foo";
         let output = "Zm9v";
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -105,7 +117,10 @@ mod decoder {
         let input = "foob";
         let output = "Zm9vYg==";
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -113,7 +128,10 @@ mod decoder {
         let input = "fooba";
         let output = "Zm9vYmE=";
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -121,6 +139,9 @@ mod decoder {
         let input = "foobar";
         let output = "Zm9vYmFy";
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 }

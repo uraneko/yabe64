@@ -34,7 +34,8 @@ use crate::{BASE32, BASE32HEX};
 ///     final unit of encoded output will be seven characters followed by
 ///     one "=" padding character.
 
-/// separates the input string into chunks of 24bits
+// separates the input string into chunks of 24bits
+// bytes_of_u40
 fn into_40bits_chunks(data: &str) -> Vec<u64> {
     let mut bytes = data.as_bytes().chunks(5);
     // println!("{:?}", bytes.clone().collect::<Vec<&[u8]>>());
@@ -75,6 +76,7 @@ fn into_40bits_chunks(data: &str) -> Vec<u64> {
     bytes
 }
 
+// bytes_of_u5
 fn into_5bits_bytes(bytes: Vec<u64>) -> Vec<u8> {
     let bytes = bytes.into_iter();
     // let mut last = bytes.next_back().unwrap();
@@ -82,6 +84,7 @@ fn into_5bits_bytes(bytes: Vec<u64>) -> Vec<u8> {
     bytes
         .map(|b| {
             [
+                // NOTE & 31 to take only the least 5 bits
                 (b >> 35) as u8 & 31,
                 (b >> 30) as u8 & 31,
                 (b >> 25) as u8 & 31,

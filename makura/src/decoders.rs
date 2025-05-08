@@ -561,6 +561,90 @@ mod deducer_chars {
             .into_iter()
             .all(|c| NUM.contains(c) || HEX.contains(c))
     }
+
+    #[cfg(test)]
+    mod test_chars {
+        use super::*;
+
+        #[test]
+        fn test0_64url() {
+            let output = "pl-";
+
+            assert_eq!(chars_are_64url(output.as_bytes()), true);
+        }
+
+        #[test]
+        fn test1_64url() {
+            let output = "sqw_";
+
+            assert_eq!(chars_are_64url(output.as_bytes()), true);
+        }
+
+        #[test]
+        fn test0_64() {
+            let output = "sqw+";
+
+            assert_eq!(chars_are_64(output.as_bytes()), true);
+        }
+
+        #[test]
+        fn test1_64() {
+            let output = "sqw/";
+
+            assert_eq!(chars_are_64(output.as_bytes()), true);
+        }
+
+        #[test]
+        fn test2_64() {
+            let output = "12e2e23cSIJOA";
+
+            assert_eq!(chars_are_64(output.as_bytes()), true);
+        }
+
+        #[test]
+        fn test0_45() {
+            let output = "CSAL $%*+-./:";
+
+            assert_eq!(chars_are_45(output.as_bytes()), true);
+        }
+
+        #[test]
+        fn test_32hex() {
+            let output = "49312ASC";
+
+            assert_eq!(chars_are_32hex(output.as_bytes()), true);
+        }
+
+        #[test]
+        #[should_panic]
+        fn fail_32hex() {
+            let output = "697JHGX";
+
+            assert_eq!(chars_are_32hex(output.as_bytes()), true);
+        }
+
+        #[test]
+        fn test_32() {
+            let output = "AZSX5672";
+
+            assert_eq!(chars_are_32(output.as_bytes()), true);
+        }
+
+        #[test]
+        #[should_panic]
+        fn fail_32() {
+            let output = "1SA";
+
+            assert_eq!(chars_are_32(output.as_bytes()), true);
+        }
+
+        #[test]
+        fn test_16() {
+            let output = "6587AF";
+
+            assert_eq!(chars_are_16(output.as_bytes()), true);
+        }
+    }
 }
 
 // DOCS:
@@ -748,5 +832,121 @@ mod bench_deduce_encoding {
                 crate::Decoder::deduce_encoding(&e).unwrap();
             })
         });
+    }
+}
+
+/// this module tests that the decoding errors happen as intended when they are supposed to
+#[cfg(test)]
+mod test_errors {
+    use core::mem::discriminant;
+
+    use super::{BASE16, BASE32, BASE32HEX, BASE64};
+    use super::{DecodeError, Decoder};
+
+    // BUG decoding "1239" from base
+
+    // #[test]
+    // fn err_bad_encoding() {
+    //     let input = "foobar";
+    //     let Err(e) = Decoder::decode(input, BASE64) else {
+    //         unreachable!("input string is not proper base64 encoded, so how did it pass")
+    //     };
+    //
+    //     assert_eq!(e, DecodeError::BadEncodedString);
+    // }
+    // TODO remove BadEncodedString variant -> it should be never reached
+    // anywhere in the current design, deprecated by the newer variants
+
+    #[test]
+    fn err_bad_len_for_base() {
+        let input = "123";
+        let Err(e) = Decoder::decode(input, BASE64) else {
+            unreachable!("input string is not proper base64 encoded, so how did it pass")
+        };
+
+        assert_eq!(e, DecodeError::BadLenForBase(3));
+    }
+
+    #[test]
+    fn err_undetected_base_encoding() {
+        let input = "@";
+        let Err(e) = super::Bases::default().deduce_encoding(input) else {
+            unreachable!("input string is not proper base64 encoded, so how did it pass")
+        };
+
+        assert_eq!(e, DecodeError::BaseEncodingNotFoundForInput);
+    }
+
+    #[test]
+    fn err_unrecognized_char_for_base() {
+        let input = "VT09PQ==";
+        let Err(e) = Decoder::decode(input, BASE16) else {
+            unreachable!("input string is not proper base64 encoded, so how did it pass")
+        };
+
+        assert_eq!(
+            e,
+            DecodeError::UnrecognizedCharForBase {
+                ch: 'V',
+                base: BASE16
+            }
+        );
+    }
+
+    // TODO remove this variant
+    // UnrecognizedCharForBase already catches the same error
+    // this variant is redundant
+    // #[test]
+    // fn err_table_index_overflow() {
+    //     let input = "";
+    //     let Err(e) = Decoder::decode(input, BASE64) else {
+    //         unreachable!("input string is not proper base64 encoded, so how did it pass")
+    //     };
+    //
+    //     assert_eq!(
+    //         e,
+    //         DecodeError::TableIndexOverflow {
+    //             base: BASE64,
+    //             value: 120
+    //         },
+    //     );
+    // }
+
+    #[test]
+    fn err_not_a_paddable_base_encoding() {
+        let input = "09==";
+        let Err(e) = Decoder::decode(input, BASE16) else {
+            unreachable!("input string is not proper base64 encoded, so how did it pass")
+        };
+
+        assert_eq!(e, DecodeError::NotAPaddableBaseEncoding(BASE16));
+    }
+
+    #[test]
+    fn err_utf8_error() {
+        let input = "1239";
+
+        let Err(DecodeError::Utf8Error(e)) = Decoder::decode(input, BASE64).unwrap().into_utf8()
+        else {
+            unreachable!("input string is not proper base64 encoded, so how did it pass")
+        };
+
+        assert!(core::any::type_name_of_val(&e).ends_with("Utf8Error"));
+
+        assert_eq!(e.error_len(), Some(1));
+    }
+
+    #[test]
+    fn err_encoding_base_is_excluded() {
+        // let input = "ABC=====";
+        // panic!("{:?}", Decoder::deduce_exclude(input, &[BASE32, BASE32HEX]));
+        // let Err(e) = Decoder::deduce_exclude(input, &[BASE32]) else {
+        //     unreachable!("input string is not proper base64 encoded, so how did it pass")
+        // };
+        //
+        // assert_eq!(
+        //     discriminant(&e),
+        //     discriminant(&DecodeError::BadEncodedString)
+        // );
     }
 }

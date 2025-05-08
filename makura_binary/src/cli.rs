@@ -3,13 +3,14 @@ use std::io::{BufRead, BufReader, IsTerminal, Write};
 use std::io::{Read, stdin};
 
 use makura::Base;
-use makura::{Decoder, Encoder};
+use makura::{Bases, Decoder, Encoder};
 
 #[derive(Debug)]
 pub enum CLIInput {
     Decode {
         base: Base,
         data: String,
+        #[deprecated(note = "use '_' as --base arg value for auto base deduction instead")]
         auto: bool,
     },
     Encode {
@@ -27,6 +28,7 @@ pub enum CLIInput {
     Help {
         message: Help,
     },
+    Version,
 }
 
 impl CLIInput {
@@ -41,7 +43,7 @@ impl CLIInput {
         let action = args.next().unwrap();
         let mut map: HashMap<String, String> = HashMap::with_capacity(4);
         while let Some(arg) = args.next() {
-            map.insert(arg, args.next().unwrap());
+            map.insert(arg, args.next().unwrap_or_else(|| "".into()));
         }
 
         match action.trim() {
@@ -110,6 +112,7 @@ impl CLIInput {
             "h" | "help" => CLIInput::Help {
                 message: Help::help(),
             },
+            "v" | "version" => CLIInput::Version,
             val => unreachable!("{}", val),
         }
     }
@@ -123,6 +126,7 @@ impl CLIInput {
     pub fn run(self) {
         let mut stdout = std::io::stdout().lock();
         let output = match self {
+            Self::Version => format!("makura {}", VERSION),
             Self::Help { message } => message.format(),
             Self::Decode { data, base, auto } => {
                 let output = if auto {
@@ -132,7 +136,7 @@ impl CLIInput {
                 };
 
                 if let Ok(o) = output {
-                    o
+                    o.into_utf8().unwrap()
                 } else {
                     panic!("{:?}", output)
                 }
@@ -140,26 +144,27 @@ impl CLIInput {
             Self::Encode { data, base } => {
                 let enc = Encoder::from(base);
 
-                enc.encode(data)
+                enc.encode(&core::str::from_utf8(&[1]).unwrap())
             }
             Self::Convert { data, src, dest } => {
                 let input = Decoder::decode(data, src);
                 if input.is_err() {
                     panic!("{:#?}", input);
                 }
-                let input = input.unwrap();
+                let input = input.unwrap().into_utf8().unwrap();
                 let enc = Encoder::from(dest);
 
                 enc.encode(input)
             }
             Self::Deduce { data } => {
-                let base = Decoder::deduce_encoding(&data);
+                let base = Bases::default().deduce_encoding(&data);
 
                 format!("{:#?}", base)
             }
         };
 
         stdout.write(output.as_bytes()).unwrap();
+        // TODO maybe add option to append line feed '\n' to output string
     }
 }
 
@@ -275,6 +280,7 @@ impl Help {
 const SUP_S: &str = "\x1b[1;38;2;182;213;132m";
 const SUB_S: &str = "\x1b[1;38;2;192;122;113m";
 const RESET_S: &str = "\x1b[0m";
+const VERSION: &str = "0.1.2";
 
 #[derive(Debug, Clone)]
 pub struct Help {

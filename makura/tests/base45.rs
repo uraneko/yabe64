@@ -32,6 +32,7 @@ mod encoder {
 }
 
 mod decoder {
+    use makura::Bases;
     use makura::Decoder;
 
     #[test]
@@ -39,6 +40,9 @@ mod decoder {
         let output = "QED8WEX0";
         let input = "ietf!";
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 }
