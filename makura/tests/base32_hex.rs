@@ -65,7 +65,10 @@ mod decoder {
         let input = "f";
         let output = "CO======";
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -73,7 +76,10 @@ mod decoder {
         let input = "fo";
         let output = "CPNG====";
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -81,7 +87,10 @@ mod decoder {
         let input = "foo";
         let output = "CPNMU===";
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -89,7 +98,10 @@ mod decoder {
         let input = "foob";
         let output = "CPNMUOG=";
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -97,18 +109,28 @@ mod decoder {
         let input = "fooba";
         let output = "CPNMUOJ1";
 
-        assert_eq!(Decoder::decode(output, BASE32HEX).unwrap(), input);
+        assert_eq!(
+            Decoder::decode(output, BASE32HEX)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
+            input
+        );
     }
 
     #[test]
-    #[should_panic]
+    // #[should_panic]
+    // no longer fails with the new deduce_encoding method of Bases
     fn test4_fail() {
         let input = "fooba";
         let output = "CPNMUOJ1";
         // println!("{:?}", Decoder::deduce_encoding(output));
         // -> BASE45 // wrong
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 
     #[test]
@@ -116,6 +138,9 @@ mod decoder {
         let input = "foobar";
         let output = "CPNMUOJ1E8======";
 
-        assert_eq!(Decoder::decode_deduce(output).unwrap(), input);
+        assert_eq!(
+            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            input
+        );
     }
 }
