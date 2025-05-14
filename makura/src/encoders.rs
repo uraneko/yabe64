@@ -79,6 +79,27 @@ impl Encoder {
             Base::_16 => base16_encode(value),
         }
     }
+
+    /// repeats self.encode <repeat> times
+    pub fn encode_repeat<T: AsRef<str>>(&self, value: T, mut repeat: usize) -> String {
+        let mut value = self.encode(value);
+        while repeat > 0 {
+            value = self.encode(value);
+            repeat -= 1;
+        }
+
+        value
+    }
+
+    /// encodes the given input string in sequence using the given bases
+    pub fn encode_chain<T: AsRef<str>>(value: T, chain: &[Base]) -> String {
+        let mut value = value.as_ref().into();
+        chain.into_iter().for_each(|b| {
+            value = Self::from(*b).encode(&value);
+        });
+
+        value.into()
+    }
 }
 
 impl From<Base> for Encoder {

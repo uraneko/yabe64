@@ -228,7 +228,7 @@ impl Decoder {
     pub fn decode_deduce<T: AsRef<[u8]> + core::fmt::Debug>(
         value: T,
     ) -> Result<DecodeOutput, DecodeError> {
-        let base = Bases::default().deduce_sorted(&value);
+        let base = Bases::deduce_default(&value);
 
         if base.is_err() {
             return base.map(|_| Default::default());
