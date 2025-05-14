@@ -1,8 +1,6 @@
 #![cfg(any(feature = "base32", feature = "base32_hex"))]
 use crate::makura_alloc::Vec;
 
-use super::DecodeError;
-
 /// DOCS
 /// last 3 octets
 /// (1) The final quantum of encoding input is an integral multiple of 24
