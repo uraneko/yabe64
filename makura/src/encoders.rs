@@ -1,7 +1,8 @@
 #![cfg(feature = "encoding")]
-use crate::makura_alloc::{String, Vec};
+use crate::makura_alloc::String;
 
 use super::Base;
+use super::{BASE16, BASE32, BASE32HEX, BASE45, BASE64, BASE64URL};
 
 mod base16;
 mod base32;
@@ -15,7 +16,7 @@ use base45::base45_encode;
 use base64::base64_encode;
 use base64::base64_url_encode;
 
-/// exposes feature enabled bases encoding
+/// exposes feature enabled base encodings
 pub struct Encoder {
     base: Base,
 }
@@ -68,7 +69,7 @@ impl Encoder {
     ///
     /// This method always returns a string,
     /// passing an empty string results in a an empty `String` return value
-    pub fn encode(&self, value: impl AsRef<str>) -> String {
+    pub fn encode<T: AsRef<str>>(&self, value: T) -> String {
         match self.base {
             Base::_64 => base64_encode(value),
             Base::_64URL => base64_url_encode(value),
@@ -76,6 +77,40 @@ impl Encoder {
             Base::_32 => base32_encode(value),
             Base::_32HEX => base32_hex_encode(value),
             Base::_16 => base16_encode(value),
+        }
+    }
+
+    /// repeats self.encode <repeat> times
+    pub fn encode_repeat<T: AsRef<str>>(&self, value: T, mut repeat: usize) -> String {
+        let mut value = self.encode(value);
+        while repeat > 0 {
+            value = self.encode(value);
+            repeat -= 1;
+        }
+
+        value
+    }
+
+    /// encodes the given input string in sequence using the given bases
+    pub fn encode_chain<T: AsRef<str>>(value: T, chain: &[Base]) -> String {
+        let mut value = value.as_ref().into();
+        chain.into_iter().for_each(|b| {
+            value = Self::from(*b).encode(&value);
+        });
+
+        value.into()
+    }
+}
+
+impl From<Base> for Encoder {
+    fn from(value: Base) -> Self {
+        match value {
+            BASE64 => Encoder::base64(),
+            BASE64URL => Encoder::base64_url(),
+            BASE45 => Encoder::base45(),
+            BASE32 => Encoder::base32(),
+            BASE32HEX => Encoder::base32_hex(),
+            BASE16 => Encoder::base16(),
         }
     }
 }

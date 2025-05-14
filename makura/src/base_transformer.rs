@@ -9,7 +9,7 @@ pub(crate) struct BaseTransformer {
 }
 
 impl BaseTransformer {
-    pub(crate) fn new(base: u8, value: impl ops::Shl + ops::MulAssign + Into<u64>) -> Self {
+    pub(crate) fn new<T: ops::Shl + ops::MulAssign + Into<u64>>(base: u8, value: T) -> Self {
         Self {
             base,
             value: value.into(),

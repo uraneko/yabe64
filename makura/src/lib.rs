@@ -9,7 +9,9 @@ pub(crate) use base_transformer::BaseTransformer;
 mod decoders;
 mod encoders;
 
+pub use decoders::Bases;
 pub use decoders::DecodeError;
+pub use decoders::DecodeOutput;
 pub use decoders::Decoder;
 pub use encoders::Encoder;
 
@@ -22,7 +24,7 @@ pub const BASE32HEX: Base = Base::_32HEX;
 pub const BASE16: Base = Base::_16;
 pub const BASE45: Base = Base::_45;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Ord, PartialOrd, Eq)]
 pub enum Base {
     _64,
     _64URL,
@@ -30,6 +32,23 @@ pub enum Base {
     _32,
     _32HEX,
     _16,
+}
+
+impl core::fmt::Debug for Base {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::_64 => "Base64",
+                Self::_64URL => "Base64URL",
+                Self::_45 => "Base45",
+                Self::_32 => "Base32",
+                Self::_32HEX => "Base32HEX",
+                Self::_16 => "Base16",
+            }
+        )
+    }
 }
 
 impl core::fmt::Display for Base {
@@ -46,6 +65,22 @@ impl core::fmt::Display for Base {
                 Self::_16 => "Base16",
             }
         )
+    }
+}
+
+impl TryFrom<&str> for Base {
+    type Error = ();
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "64" => Ok(BASE64),
+            "64url" => Ok(BASE64URL),
+            "45" => Ok(BASE45),
+            "32" => Ok(BASE32),
+            "32hex" => Ok(BASE32HEX),
+            "16" => Ok(BASE16),
+            _ => Err(()),
+        }
     }
 }
 
@@ -360,69 +395,90 @@ pub(crate) fn idx_from_char(chr: char, base: &Base) -> Result<u8, DecodeError> {
         ':' if base.is_45() => Ok(44),
 
         // _ => panic!("got impossile table char {} for base {:?}", chr, base),
-        ch => Err(DecodeError::UnrecognizedCharForBase { ch, base: *base }),
+        ch => Err(DecodeError::InvalidChar {
+            char: ch,
+            base: *base,
+        }),
     }
 }
 
-// pub(self) mod char_checks {
-//
-//     pub(crate) fn is_base64(chr: char) -> bool {
-//         [
-//             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
-//             'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
-//             'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
-//             'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '=',
-//         ]
-//         .contains(&chr)
-//     }
-//
-//     pub(crate) fn is_base64_url(chr: char) -> bool {
-//         !['+', '/'].contains(&chr)
-//     }
-//
-//     pub(crate) fn is_base64_normal(chr: char) -> bool {
-//         !['-', '_'].contains(&chr)
-//     }
-//
-//     pub(crate) fn is_base32(chr: char) -> bool {
-//         [
-//             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
-//             'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '2', '3', '4', '5', '6', '7', '=',
-//         ]
-//         .contains(&chr)
-//     }
-//
-//     pub(crate) fn is_base32_hex(chr: char) -> bool {
-//         [
-//             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-//             'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', '=',
-//         ]
-//         .contains(&chr)
-//     }
-//
-//     pub(crate) fn is_base16(chr: char) -> bool {
-//         [
-//             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
-//         ]
-//         .contains(&chr)
-//     }
-//
-//     pub(crate) fn is_base45(c: char) -> bool {
-//         [
-//             'W', 'X', 'Y', 'Z', ' ', '$', '%', '*', '+', '-', '.', '/', ':',
-//         ]
-//         .contains(&c)
-//             || is_base16(c)
-//             || (is_base32_hex(c) && c != '=')
-//     }
-// }
-
 pub(crate) mod makura_alloc {
     extern crate alloc;
-    pub(crate) use alloc::string::{FromUtf8Error, String};
-    pub(crate) use alloc::vec::Vec;
+    pub(crate) use alloc::borrow::Cow;
+    pub(crate) use alloc::collections::BTreeSet;
+    pub(crate) use alloc::string::String;
+    pub(crate) use alloc::{vec, vec::Vec};
 }
 
 pub(crate) mod makura_core {
     pub(crate) use core::ops;
+    pub(crate) use core::str::Utf8Error;
+}
+
+#[cfg(test)]
+mod tests {
+    use core::assert;
+
+    use super::char_from_idx;
+    use super::{BASE16, BASE32, BASE45, BASE64};
+
+    #[test]
+    #[should_panic]
+    fn fail_char_from_idx64() {
+        char_from_idx(64, &BASE64);
+
+        assert!(true);
+    }
+
+    #[test]
+    #[should_panic]
+    fn fail_char_from_idx45() {
+        char_from_idx(45, &BASE45);
+
+        assert!(true);
+    }
+
+    #[test]
+    #[should_panic]
+    fn fail_char_from_idx32() {
+        char_from_idx(32, &BASE32);
+
+        assert!(true);
+    }
+
+    #[test]
+    #[should_panic]
+    fn fail_char_from_idx16() {
+        char_from_idx(16, &BASE16);
+
+        assert!(true);
+    }
+
+    #[test]
+    fn test_char_from_idx64() {
+        char_from_idx(63, &BASE64);
+
+        assert!(true);
+    }
+
+    #[test]
+    fn test_char_from_idx45() {
+        char_from_idx(44, &BASE45);
+
+        assert!(true);
+    }
+
+    #[test]
+    fn test_char_from_idx32() {
+        char_from_idx(31, &BASE32);
+
+        assert!(true);
+    }
+
+    #[test]
+    fn test_char_from_idx16() {
+        char_from_idx(15, &BASE16);
+
+        assert!(true);
+    }
 }
