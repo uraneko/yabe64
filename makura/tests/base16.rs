@@ -75,10 +75,9 @@ mod decoder {
         let input = "";
         let output = "";
 
-        assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
-            input
-        );
+        let enc = Bases::deduce_default(input).unwrap();
+
+        assert_eq!(Decoder::decode_utf8(output, enc).unwrap(), input);
     }
 
     #[test]
@@ -87,7 +86,10 @@ mod decoder {
         let output = "66";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE16)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }
@@ -98,7 +100,10 @@ mod decoder {
         let output = "666F";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE16)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }
@@ -109,7 +114,10 @@ mod decoder {
         let output = "666F6F";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE16)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }
@@ -120,7 +128,10 @@ mod decoder {
         let output = "666F6F62";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE16)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }
@@ -131,7 +142,10 @@ mod decoder {
         let output = "666F6F6261";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE16)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }
@@ -142,7 +156,10 @@ mod decoder {
         let output = "666F6F626172";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE16)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }

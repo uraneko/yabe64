@@ -11,6 +11,7 @@ mod encoders;
 
 pub use decoders::Bases;
 pub use decoders::DecodeError;
+pub use decoders::DecodeOutput;
 pub use decoders::Decoder;
 pub use encoders::Encoder;
 
@@ -394,7 +395,10 @@ pub(crate) fn idx_from_char(chr: char, base: &Base) -> Result<u8, DecodeError> {
         ':' if base.is_45() => Ok(44),
 
         // _ => panic!("got impossile table char {} for base {:?}", chr, base),
-        ch => Err(DecodeError::UnrecognizedCharForBase { ch, base: *base }),
+        ch => Err(DecodeError::InvalidChar {
+            char: ch,
+            base: *base,
+        }),
     }
 }
 

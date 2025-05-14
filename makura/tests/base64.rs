@@ -66,6 +66,7 @@ mod encoder {
 }
 
 mod decoder {
+    use makura::BASE64;
     use makura::Decoder;
 
     #[test]
@@ -74,7 +75,10 @@ mod decoder {
         let output = "";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE64)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }
@@ -85,7 +89,10 @@ mod decoder {
         let output = "Zg==";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE64)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }
@@ -96,7 +103,10 @@ mod decoder {
         let output = "Zm8=";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE64)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }
@@ -107,7 +117,10 @@ mod decoder {
         let output = "Zm9v";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE64)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }
@@ -118,7 +131,10 @@ mod decoder {
         let output = "Zm9vYg==";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE64)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }
@@ -129,7 +145,10 @@ mod decoder {
         let output = "Zm9vYmE=";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE64)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }
@@ -140,7 +159,10 @@ mod decoder {
         let output = "Zm9vYmFy";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE64)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }

@@ -84,46 +84,50 @@ impl<'a> From<&'a [u8]> for DecodeOutputRef<'a> {
 /// errors that can occur during the decoding process of some base encoded input value
 #[derive(Debug, PartialEq)]
 pub enum DecodeError {
-    /// string was deduced to be base<x> encoded but contains char(s) that
-    /// don't belong to base<x>'s encoding table
-    // #[deprecated]
-    BadEncodedString,
-    /// the length of the input value
-    /// doesn't fit the value length that the given base encoding should generate
-    /// e.g., all base64 encoded strings should have a length that
-    /// satisfies len % 4 == 0
-    ///
-    /// .0 corresponds to the bad length value
-    BadLenForBase(usize),
-    /// string encoding is not any of the implemented base encodings
-    /// i.e., it is not base 64, 64url, 45, 32, 32hex or 16 encoded
-    BaseEncodingNotFoundForInput,
-    /// when trying to decode some base encoded string's char using said base's alphabet table
-    /// this variant is returned if the given char is not part of that base's alphabet table
-    UnrecognizedCharForBase { ch: char, base: Base },
-    // UnrecognizedIndexForBase {
-    //     idx: u8,
-    //     base: Base,
-    // },
-    /// one or more encoded input vec bytes have a value greater that the base encoding's
-    /// table max value
-    /// e.g., a base64 encoded string bytes should all satisfy 0 < byte <= 63
-    // #[deprecated]
-    TableIndexOverflow { base: Base, value: u8 },
     /// when decoding an encoded string that is supposed to be of base 16 or 45
     /// both of which can not contain padding '=' chars
     /// yet a padding char was found at the end of the encoded string
-    NotAPaddableBaseEncoding(Base),
+    NonPaddableEncoding(Base),
     /// results from trying togenerate a string from a Vec<u8> decoded bytes of an
     /// originally encoded string value
     ///
     /// this variant simply passes on the error value from the alloc::string::String::from_utf8
     /// String method
     Utf8Error(Utf8Error),
-    /// can only be reached from the deduce_exclude Decoder function
-    /// signifies that the correct base was deduced but it has been excluded from the deduction
-    /// the deduction process exits with this error value since further deduction is useless
-    EncodingBaseIsExcluded(Base),
+    /// string encoding is not any of the implemented base encodings
+    /// i.e., it is not base 64, 64url, 45, 32, 32hex or 16 encoded
+    ZeroValidEncodings,
+    /// deducer has run all checks
+    /// but more than one base encoding is valid
+    TooManyValidEncodings { bases: Vec<Base> },
+    /// occurs only on base64 and 32 encoding variants
+    /// and only when there is padding on the encoded value
+    /// indicates that the last char which should belong to a subset
+    /// of the encoding table was out of that subset
+    /// read DOCS section on src/decoders.rs mod deducer_pads
+    InvalidLastCharForPadding { char: char, idx: u8, pads: u8 },
+    /// padding value is invalid for passed encoding
+    InvalidPadding { pads: u8, base: Base },
+    /// encoded value chars and passed encoding base dont match
+    // NOTE is this not still redundant with UnrecognizedCharForBase variant???
+    InvalidChar { char: char, base: Base },
+    /// encded value's len doesn't match with passed base
+    InvalidLen { len: usize, base: Base },
+}
+
+// takes input value bytes
+//
+// returns last byte, len with pads, padding length
+fn input_meta(value: &mut &[u8]) -> (u8, usize, u8) {
+    let len = value.len();
+    let mut pads = 0u8;
+    while value.ends_with(&['=' as u8]) {
+        pads += 1;
+        *value = value.strip_suffix(&[('=' as u8)]).unwrap();
+    }
+    let last = value.last().unwrap();
+
+    (*last, len, pads)
 }
 
 // this only exists to match Encoder struct
@@ -140,13 +144,17 @@ impl Decoder {
         let mut val = value.into_iter().map(|c| match *c as char {
             '=' => {
                 if base == &BASE16 || base == &BASE45 {
-                    Err(DecodeError::NotAPaddableBaseEncoding(*base))
+                    // this error is no longer reachable
+                    Err(DecodeError::NonPaddableEncoding(*base))
                 } else {
                     Ok(0)
                 }
             }
             val => idx_from_char(val, base),
         });
+
+        // dont like this part
+        // TODO OPTIMIZE
         if val.clone().any(|i| i.is_err()) {
             std::println!("0");
             return val.find(|i| i.is_err()).unwrap().map(|_| vec![]);
@@ -171,94 +179,27 @@ impl Decoder {
     // NOTE was force_decode
     // TODO all decode functions need to add assert_encoding
     // if it errors they error without decoding
-    pub fn decode(value: impl AsRef<[u8]>, base: Base) -> Result<DecodeOutput, DecodeError> {
-        let value = value.as_ref();
+    pub fn decode<T: AsRef<[u8]>>(value: T, base: Base) -> Result<DecodeOutput, DecodeError> {
+        let mut value = value.as_ref();
         if value.is_empty() {
             return Ok(Default::default());
         }
 
-        let valid_len = base.validate_len(value);
-        if valid_len.is_err() {
-            return valid_len.map(|_| DecodeOutput::default());
-        }
+        let (last, len, pads) = input_meta(&mut value);
 
-        let indices = Self::into_table_idx(value, &base);
-        if indices.is_err() {
-            return indices.map(|_| DecodeOutput::default());
-        }
-        let indices = indices.unwrap();
-
-        Ok(match base {
-            BASE64 => base64_decode(indices),
-            BASE64URL => base64_url_decode(indices),
-            BASE45 => base45_decode(indices),
-            BASE32 => base32_decode(indices),
-            BASE32HEX => base32_hex_decode(indices),
-            BASE16 => base16_decode(indices),
-        }
-        .into())
-    }
-
-    /// same as the decode function  but takes and returns raw Vec<u8>s instead of string types
-    /// # Error
-    /// * returns an error if the
-    #[deprecated(
-        note = "use decode instead, since decode can now take &[u8] and all decode fns now return Vec<u8>"
-    )]
-    pub fn decode_bytes(value: Vec<u8>, base: Base) -> Result<Vec<u8>, DecodeError> {
-        if value.is_empty() {
-            return Ok(Vec::new());
-        }
-        // it's fine here since the bytes are user provided
-        // so they must be validated
-        let correct_base = base.assert_encoding(&value);
-        if correct_base.is_err() {
-            return correct_base.map(|_| Vec::new());
-        }
-
-        Ok(match base {
-            BASE64 => base64_decode(value),
-            BASE64URL => base64_url_decode(value),
-            BASE45 => base45_decode(value),
-            BASE32 => base32_decode(value),
-            BASE32HEX => base32_hex_decode(value),
-            BASE16 => base16_decode(value),
-        })
-    }
-
-    /// decodes the given string
-    /// takes encoded string
-    /// returns `Ok(String)` value of decoded string at success
-    /// or `Err(DecodeError)` in case of failure
-    ///
-    /// # Error
-    /// returns an error when
-    /// * `deduce_encoding` returns an error
-    /// * the decode function returns an error that wasnt cought by `deduce_decoding`
-    ///
-    // NOTE was decode
-    pub fn decode_deduce(value: impl AsRef<[u8]>) -> Result<DecodeOutput, DecodeError> {
-        let value = value.as_ref();
-        if value.is_empty() {
-            return Ok(Default::default());
-        }
-
-        let base = match Bases::default().deduce_encoding(&value) {
-            Err(e) => return Err(e),
-            Ok(b) => b,
+        let indices = if !base.is_valid_len(len) {
+            return Err(DecodeError::InvalidLen { len, base });
+        } else if !base.is_valid_padding(last, pads) {
+            return Err(DecodeError::InvalidPadding { pads, base });
+        } else {
+            let indices = Self::into_table_idx(value, &base);
+            if let Err(e) = indices {
+                return Err(e);
+            } else {
+                indices.unwrap()
+            }
         };
 
-        let valid_len = base.validate_len(&value);
-        if valid_len.is_err() {
-            return valid_len.map(|_| unsafe { core::mem::zeroed::<_>() });
-        }
-
-        let indices = Self::into_table_idx(value, &base);
-        if indices.is_err() {
-            return indices.map(|_| unsafe { core::mem::zeroed::<_>() });
-        }
-        let indices = indices.unwrap();
-
         Ok(match base {
             BASE64 => base64_decode(indices),
             BASE64URL => base64_url_decode(indices),
@@ -270,59 +211,34 @@ impl Decoder {
         .into())
     }
 
-    #[deprecated(note = "use BaseSlice::default().deduce_encoding() instead")]
-    pub fn deduce_encoding(value: &str) -> Result<Base, DecodeError> {
-        let len = value.len();
-        if value.contains(char::is_lowercase) {
-            if len % 4 != 0 {
-                return Err(DecodeError::BadEncodedString);
-            }
-
-            // NOTE: even if the actual encoding is base64url
-            // if no base64url specific chars are found
-            // then it can be treated as normal base64
-            return Ok(if value.contains(['_', '-']) {
-                BASE64URL
-            } else {
-                BASE64
-            });
-        } else if value
-            .chars()
-            .all(|c| ('0'..='9').contains(&c) || ('A'..='F').contains(&c))
-        {
-            if len % 2 == 0 {
-                return Ok(BASE16);
-            } else if len % 3 == 1 {
-                return Err(DecodeError::BadEncodedString);
-            }
-        } else if value.chars().all(|c| {
-            ('0'..='9').contains(&c)
-                || ('A'..='Z').contains(&c)
-                || [' ', '$', '%', '*', '+', '-', '.', '/', ':'].contains(&c)
-        }) {
-            let residual = len % 3;
-            if residual != 1 {
-                return Ok(BASE45);
-            } else if len % 8 != 0 {
-                return Err(DecodeError::BadEncodedString);
-            }
+    pub fn decode_deduce<T: AsRef<[u8]>>(value: T) -> Result<DecodeOutput, DecodeError> {
+        let base = Bases::default().deduce_sorted(&value);
+        if base.is_err() {
+            return base.map(|_| Default::default());
         }
-        // HACK this function needs a refactor... again
-        // should have been if else not if
-        if value
-            .chars()
-            .all(|c| ('0'..='9').contains(&c) || ('A'..='V').contains(&c) || c == '=')
-        {
-            return Ok(BASE32HEX);
-        } else if value
-            .chars()
-            .all(|c| ('A'..='Z').contains(&c) || ('2'..='7').contains(&c))
-        /* || value.contains(['W', 'X', 'Y', 'Z']) */ // this should be an and maybe condition
-        {
-            return Ok(BASE32);
+        let base = base.unwrap();
+
+        Self::decode(value, base)
+    }
+
+    /// same as using decode -> unwrap -. into_ascii
+    pub fn decode_ascii<T: AsRef<[u8]>>(value: T, base: Base) -> Result<String, DecodeError> {
+        let res = Self::decode(value, base);
+        if res.is_err() {
+            return res.map(|_| String::new());
         }
 
-        Err(DecodeError::BaseEncodingNotFoundForInput)
+        Ok(res.unwrap().into_ascii())
+    }
+
+    /// same as using decode -> unwrap -. into_utf8
+    pub fn decode_utf8<T: AsRef<[u8]>>(value: T, base: Base) -> Result<String, DecodeError> {
+        let res = Self::decode(value, base);
+        if res.is_err() {
+            return res.map(|_| String::new());
+        }
+
+        res.unwrap().into_utf8()
     }
 }
 
@@ -337,7 +253,7 @@ pub struct Bases {
 impl Default for Bases {
     fn default() -> Self {
         Self {
-            bases: BTreeSet::from_iter([BASE64, BASE64URL, BASE45, BASE32, BASE32HEX, BASE16]),
+            bases: BTreeSet::from_iter([BASE32, BASE32HEX, BASE16, BASE45, BASE64, BASE64URL]),
         }
     }
 }
@@ -350,12 +266,11 @@ impl From<&[Base]> for Bases {
     }
 }
 
-impl Bases {
-    /// calls self's deduce_encoding on Self::default,
-    /// which is all 6 known bases
-    /// takes the input value to be analyzed
-    pub fn deduce_default<T: AsRef<[u8]>>(value: T) -> Result<Base, DecodeError> {
-        Self::default().deduce_encoding(value)
+impl From<&mut Bases> for Vec<Base> {
+    fn from(value: &mut Bases) -> Self {
+        let mut val = core::mem::take(value);
+
+        val.bases().into_iter().collect()
     }
 }
 
@@ -439,65 +354,107 @@ impl Bases {
     /// an example of this is the integrated decoder tests for base32 hex at `tests/base32_hex.rs`,
     /// test4 function panics when using `decode_deduce` instead of `decode` with a passed
     /// Base value
+    ///
+    /// this method always returns an error if there is more than 1 valid base
+    /// it doesnt do estimations or guesses, only definitive answers
     pub fn deduce_encoding<T: AsRef<[u8]>>(&mut self, value: T) -> Result<Base, DecodeError> {
         extern crate std;
 
         let mut value = value.as_ref();
-        let len = value.len();
-        let mut pads = 0;
-        while value.ends_with(&['=' as u8]) {
-            pads += 1;
-            value = value.strip_suffix(&[('=' as u8)]).unwrap();
-        }
-        std::println!("pads = {}", pads);
-
-        match pads {
-            1 | 2 => {
-                self.remove(BASE45);
-                self.remove(BASE16);
-            }
-            3 | 4 | 6 => {
-                self.remove(BASE45);
-                self.remove(BASE16);
-                self.remove(BASE64);
-                self.remove(BASE64URL);
-            }
-            0 => (),
-            pads => unreachable!(
-                "{} is not a valid padding len for base64 or 32 encodings",
-                pads
-            ),
-        }
-        std::println!("bases = {:?}", self.bases);
+        let (last, len, pads) = input_meta(&mut value);
 
         *self = Self {
             bases: self
                 .bases()
                 .into_iter()
-                .filter(|b| b.chars_match(value))
+                .inspect(|b| {
+                    std::println!(
+                        "\nbase({}) -> chars:{}, len({}):{}, pads:{}",
+                        b,
+                        b.are_valid_chars(value),
+                        len,
+                        b.is_valid_len(len),
+                        b.is_valid_padding(last, pads),
+                    )
+                })
+                .filter(|b| {
+                    b.is_valid_len(len)
+                        && b.is_valid_padding(last, pads)
+                        && b.are_valid_chars(value)
+                })
                 .collect(),
         };
         std::println!("bases = {:?}", self.bases);
 
         if self.is_empty() {
-            return Err(DecodeError::BaseEncodingNotFoundForInput);
+            return Err(DecodeError::ZeroValidEncodings);
         } else if self.len() == 1 {
             return self
                 .bases_mut()
                 .pop_first()
                 .ok_or(unsafe { core::mem::zeroed() });
         }
-        std::println!("{}", len);
 
-        match len {
-            len if self.contains(BASE16) && len % 2 == 0 => Ok(BASE16),
-            len if self.contains(BASE32HEX) && len % 8 == 0 => Ok(BASE32HEX),
-            len if self.contains(BASE32) && len % 8 == 0 => Ok(BASE32),
-            len if self.contains(BASE45) && len % 3 != 1 => Ok(BASE45),
-            len if self.contains(BASE64URL) && len % 4 == 0 => Ok(BASE64URL),
-            len if self.contains(BASE64) && len % 4 == 0 => Ok(BASE64),
-            _ => Err(DecodeError::BaseEncodingNotFoundForInput),
+        Err(DecodeError::TooManyValidEncodings { bases: self.into() })
+    }
+
+    /// same as deduce_encoding but this method will not error out
+    /// when it finds more than 1 valid encoding
+    ///
+    /// instead, it will take the first encoding of self.bases as the correct encoding
+    ///
+    /// basically this considers the passed bases to be sorted
+    /// and the least values (bases[0], base[1]...) as the most likely correct answer
+    pub fn deduce_sorted<T: AsRef<[u8]>>(&mut self, value: T) -> Result<Base, DecodeError> {
+        extern crate std;
+
+        let mut value = value.as_ref();
+        let (last, len, pads) = input_meta(&mut value);
+
+        *self = Self {
+            bases: self
+                .bases()
+                .into_iter()
+                .inspect(|b| {
+                    std::println!(
+                        "base({}) -> chars:{}, len:{}, pads:{}",
+                        b,
+                        b.is_valid_len(len),
+                        b.is_valid_padding(last, pads),
+                        b.are_valid_chars(value)
+                    )
+                })
+                .filter(|b| {
+                    b.is_valid_len(len)
+                        && b.is_valid_padding(last, pads)
+                        && b.are_valid_chars(value)
+                })
+                .collect(),
+        };
+        std::println!("bases = {:?}", self.bases);
+
+        if self.is_empty() {
+            return Err(DecodeError::ZeroValidEncodings);
+        } else if self.len() == 1 {
+            return self
+                .bases_mut()
+                .pop_first()
+                .ok_or(unsafe { core::mem::zeroed() });
+        } else if self.len() == 2 && self.contains(BASE64) && self.contains(BASE64URL) {
+            // it is pretty common to have both base64 and 64url remain together
+            // since '/' is very rare and '+' is a bit less rarer
+            // so we prioritize base64
+            return Ok(BASE64);
         }
+
+        Ok(self.bases.pop_first().unwrap())
+    }
+
+    /// calls self's deduce_encoding on Self::default,
+    /// which is all 6 known bases
+    /// takes the input value to be analyzed
+    pub fn deduce_default<T: AsRef<[u8]>>(value: T) -> Result<Base, DecodeError> {
+        Self::default().deduce_sorted(value)
     }
 }
 
@@ -699,17 +656,140 @@ mod deducer_chars {
 //
 // * if CL = 3 && NP = 0 => the last value can be any value in the base64 encoding table
 mod deducer_pads {
-    fn is_valid_64_padding() {}
+    use super::{BASE32, BASE32HEX, BASE64, BASE64URL};
+    use crate::idx_from_char;
 
-    fn is_valid_32_padding() {}
+    // this fn expects pads to be a valid base64 padding value
+    pub(super) fn is_valid_64_padding(last_byte: u8, pads: u8) -> bool {
+        let last_byte = idx_from_char(last_byte as char, &BASE64);
+        if last_byte.is_err() {
+            return false;
+        }
+        let last_byte = last_byte.unwrap();
+
+        match pads {
+            1 => last_byte % 4 == 0,
+            2 => last_byte % 16 == 0,
+            _ => unreachable!("both 0 and invalid values were checked before getting here"),
+        }
+    }
+
+    pub(super) fn is_valid_64url_padding(last_byte: u8, pads: u8) -> bool {
+        let last_byte = idx_from_char(last_byte as char, &BASE64URL);
+        if last_byte.is_err() {
+            return false;
+        }
+        let last_byte = last_byte.unwrap();
+
+        match pads {
+            1 => last_byte % 4 == 0,
+            2 => last_byte % 16 == 0,
+            _ => unreachable!("both 0 and invalid values were checked before getting here"),
+        }
+    }
+
+    pub(super) fn is_valid_32_padding(last_byte: u8, pads: u8) -> bool {
+        let last_byte = idx_from_char(last_byte as char, &BASE32);
+        if last_byte.is_err() {
+            return false;
+        }
+        let last_byte = last_byte.unwrap();
+
+        match pads {
+            1 => last_byte % 8 == 0,
+            3 => last_byte % 2 == 0,
+            4 => last_byte % 16 == 0,
+            6 => last_byte % 4 == 0,
+            _ => unreachable!("both 0 and invalid values were checked before getting here"),
+        }
+    }
+
+    pub(super) fn is_valid_32hex_padding(last_byte: u8, pads: u8) -> bool {
+        let last_byte = idx_from_char(last_byte as char, &BASE32HEX);
+        if last_byte.is_err() {
+            return false;
+        }
+        let last_byte = last_byte.unwrap();
+
+        match pads {
+            1 => last_byte % 8 == 0,
+            3 => last_byte % 2 == 0,
+            4 => last_byte % 16 == 0,
+            6 => last_byte % 4 == 0,
+            _ => unreachable!("both 0 and invalid values were checked before getting here"),
+        }
+    }
 }
 
-mod deducer_len {}
+// TODO fn a(s: impl Trai) s here is of anonymous type, which is not the same as fn a<T: Trai>(s: T)
+// use the latter, type generics instead of anonymous types
+// using anon types:
+// * all types are agnostic to each other
+// * cant use turbofish to specify generic type on fn call
+// NOTE impl Trait is useful in return types tho,
+// since it specifies that return type is anonymous
+// contrary to type generics, which are considered to be concrete types assuming i understood
+// correctly
+
+// the len checks should go first  <- least costly
+// then the pad checks            <- in between
+// then finally the chars checks <- costliest
+mod deducer_len {
+    pub(super) fn is_valid_64_len(len: usize) -> bool {
+        len % 4 == 0
+    }
+
+    pub(super) fn is_valid_32_len(len: usize) -> bool {
+        len % 8 == 0
+    }
+
+    pub(super) fn is_valid_16_len(len: usize) -> bool {
+        len % 2 == 0
+    }
+
+    pub(super) fn is_valid_45_len(len: usize) -> bool {
+        len % 3 != 1
+    }
+}
 
 impl Base {
+    pub fn is_valid_padding(&self, last_byte: u8, pads: u8) -> bool {
+        use deducer_pads::*;
+
+        if pads == 0 {
+            return true;
+        }
+
+        match pads {
+            0 => true,
+            1 if BASE64 == *self => is_valid_64_padding(last_byte, pads),
+            1 if BASE64URL == *self => is_valid_64url_padding(last_byte, pads),
+            1 if BASE32 == *self => is_valid_32_padding(last_byte, pads),
+            1 if BASE32HEX == *self => is_valid_32hex_padding(last_byte, pads),
+            1 => false,
+            2 if BASE64 == *self => is_valid_64_padding(last_byte, pads),
+            2 if BASE64URL == *self => is_valid_64url_padding(last_byte, pads),
+            2 => false,
+            3 | 4 | 6 if BASE32 == *self => is_valid_32_padding(last_byte, pads),
+            3 | 4 | 6 if BASE32HEX == *self => is_valid_32hex_padding(last_byte, pads),
+            _ => false,
+        }
+    }
+
+    pub fn is_valid_len(&self, len: usize) -> bool {
+        use deducer_len::*;
+
+        match *self {
+            BASE64 | BASE64URL => is_valid_64_len(len),
+            BASE45 => is_valid_45_len(len),
+            BASE32 | BASE32HEX => is_valid_32_len(len),
+            BASE16 => is_valid_16_len(len),
+        }
+    }
+
     /// checks whether all bytes of input
     /// match self's value
-    pub fn chars_match(&self, input: &[u8]) -> bool {
+    pub fn are_valid_chars(&self, input: &[u8]) -> bool {
         use deducer_chars::*;
         match *self {
             // FIXME it's quite redundant to do both a 64 and a 64 url checks
@@ -719,76 +799,6 @@ impl Base {
             BASE32 => chars_are_32(input),
             BASE32HEX => chars_are_32hex(input),
             BASE16 => chars_are_16(input),
-        }
-    }
-
-    /// asserts that the given vec of bytes is encoded with the given base
-    // NOTE using this in the decode functions is redundant
-    // since any bad chars are cought by the into_table_idx function
-    pub fn assert_encoding(&self, value: &[u8]) -> Result<(), DecodeError> {
-        let max = *value.into_iter().max().unwrap();
-        let len = value.len();
-        match self {
-            Base::_64 | Base::_64URL => {
-                if max < 64 && len % 4 == 0 {
-                    Ok(())
-                } else if len % 4 == 0 {
-                    Err(DecodeError::TableIndexOverflow {
-                        base: *self,
-                        value: max,
-                    })
-                } else {
-                    Err(DecodeError::BadLenForBase(len))
-                }
-            }
-            Base::_45 => {
-                if max < 45 && len % 3 != 1 {
-                    Ok(())
-                } else if len % 3 != 1 {
-                    Err(DecodeError::TableIndexOverflow {
-                        base: *self,
-                        value: max,
-                    })
-                } else {
-                    Err(DecodeError::BadLenForBase(len))
-                }
-            }
-            Base::_32 | Base::_32HEX => {
-                if max < 32 && len % 8 == 0 {
-                    Ok(())
-                } else if len % 8 == 0 {
-                    Err(DecodeError::TableIndexOverflow {
-                        base: *self,
-                        value: max,
-                    })
-                } else {
-                    Err(DecodeError::BadLenForBase(len))
-                }
-            }
-            Base::_16 => {
-                if max < 16 && len % 2 == 0 {
-                    Ok(())
-                } else if len % 2 == 0 {
-                    Err(DecodeError::TableIndexOverflow {
-                        base: *self,
-                        value: max,
-                    })
-                } else {
-                    Err(DecodeError::BadLenForBase(len))
-                }
-            }
-        }
-    }
-
-    pub fn validate_len(&self, value: &[u8]) -> Result<(), DecodeError> {
-        let len = value.len();
-        match *self {
-            BASE64 | BASE64URL if len % 4 != 0 => Err(DecodeError::BadLenForBase(len)),
-            BASE45 if len % 3 == 1 => Err(DecodeError::BadLenForBase(len)),
-            BASE32 | BASE32HEX if len % 8 != 0 => Err(DecodeError::BadLenForBase(len)),
-            BASE16 if len % 2 != 0 => Err(DecodeError::BadLenForBase(len)),
-            // the opposite of all the above arms
-            _ => Ok(()),
         }
     }
 }
@@ -827,9 +837,10 @@ mod bench_deduce_encoding {
             crate::Encoder::base32_hex().encode(DATA),
             crate::Encoder::base16().encode(DATA),
         ];
+
         b.iter(|| {
             encs.iter().for_each(|e| {
-                crate::Decoder::deduce_encoding(&e).unwrap();
+                super::Bases::deduce_default(&e).unwrap();
             })
         });
     }
@@ -838,92 +849,117 @@ mod bench_deduce_encoding {
 /// this module tests that the decoding errors happen as intended when they are supposed to
 #[cfg(test)]
 mod test_errors {
-    use core::mem::discriminant;
-
+    use super::vec;
     use super::{BASE16, BASE32, BASE32HEX, BASE64};
     use super::{DecodeError, Decoder};
 
-    // BUG decoding "1239" from base
-
-    // #[test]
-    // fn err_bad_encoding() {
-    //     let input = "foobar";
-    //     let Err(e) = Decoder::decode(input, BASE64) else {
-    //         unreachable!("input string is not proper base64 encoded, so how did it pass")
-    //     };
-    //
-    //     assert_eq!(e, DecodeError::BadEncodedString);
-    // }
-    // TODO remove BadEncodedString variant -> it should be never reached
-    // anywhere in the current design, deprecated by the newer variants
-
     #[test]
-    fn err_bad_len_for_base() {
-        let input = "123";
-        let Err(e) = Decoder::decode(input, BASE64) else {
-            unreachable!("input string is not proper base64 encoded, so how did it pass")
-        };
-
-        assert_eq!(e, DecodeError::BadLenForBase(3));
-    }
-
-    #[test]
-    fn err_undetected_base_encoding() {
+    fn zero_valid_encodings() {
         let input = "@";
         let Err(e) = super::Bases::default().deduce_encoding(input) else {
             unreachable!("input string is not proper base64 encoded, so how did it pass")
         };
 
-        assert_eq!(e, DecodeError::BaseEncodingNotFoundForInput);
+        assert_eq!(e, DecodeError::ZeroValidEncodings);
     }
 
     #[test]
-    fn err_unrecognized_char_for_base() {
-        let input = "VT09PQ==";
+    // BUG this panicked cause of decoders/base32.rs:37:21:
+    // index out of bounds: the len is 4 but the index is 4
+    fn too_many_valid_encodings() {
+        let output = "AAAA====";
+        let Err(e) = Decoder::decode(output, BASE32) else {
+            unreachable!("this should have been an error");
+        };
+
+        assert_eq!(
+            e,
+            DecodeError::TooManyValidEncodings {
+                bases: vec![BASE32, BASE32HEX]
+            }
+        );
+    }
+
+    // NOTE this error variant can't be reachaed in current impl
+    // since it is superseeded by InvalidPadding variant
+    #[test]
+    fn non_paddable_encoding() {
+        let input = "09==";
+        let Err(e) = Decoder::into_table_idx(input.as_bytes(), &BASE16) else {
+            unreachable!("input string is not proper base64 encoded, so how did it pass")
+        };
+
+        assert_eq!(e, DecodeError::NonPaddableEncoding(BASE16));
+    }
+
+    #[test]
+    fn invalid_len() {
+        let input = "123";
+        let Err(e) = Decoder::decode(input, BASE64) else {
+            unreachable!("input string is not proper base64 encoded, so how did it pass")
+        };
+
+        assert_eq!(
+            e,
+            DecodeError::InvalidLen {
+                len: 3,
+                base: BASE64
+            }
+        );
+    }
+
+    #[test]
+    fn invalid_padding() {
+        let output = "AAA=====";
+        let Err(e) = Decoder::decode(output, BASE32) else {
+            unreachable!("this should have been an error");
+        };
+
+        assert_eq!(
+            e,
+            DecodeError::InvalidPadding {
+                base: BASE32,
+                pads: 5
+            }
+        );
+    }
+
+    #[test]
+    fn invalid_char() {
+        // let input = "VT09PQ==";
+        let input = "VT";
         let Err(e) = Decoder::decode(input, BASE16) else {
             unreachable!("input string is not proper base64 encoded, so how did it pass")
         };
 
         assert_eq!(
             e,
-            DecodeError::UnrecognizedCharForBase {
-                ch: 'V',
+            DecodeError::InvalidChar {
+                char: 'V',
                 base: BASE16
             }
         );
     }
 
-    // TODO remove this variant
-    // UnrecognizedCharForBase already catches the same error
-    // this variant is redundant
-    // #[test]
-    // fn err_table_index_overflow() {
-    //     let input = "";
-    //     let Err(e) = Decoder::decode(input, BASE64) else {
-    //         unreachable!("input string is not proper base64 encoded, so how did it pass")
-    //     };
-    //
-    //     assert_eq!(
-    //         e,
-    //         DecodeError::TableIndexOverflow {
-    //             base: BASE64,
-    //             value: 120
-    //         },
-    //     );
-    // }
-
     #[test]
-    fn err_not_a_paddable_base_encoding() {
-        let input = "09==";
-        let Err(e) = Decoder::decode(input, BASE16) else {
-            unreachable!("input string is not proper base64 encoded, so how did it pass")
+    fn invalid_last_char_for_padding() {
+        let output = "AAAD====";
+        let Err(e) = Decoder::decode(output, BASE32) else {
+            unreachable!("this should have been an error");
         };
 
-        assert_eq!(e, DecodeError::NotAPaddableBaseEncoding(BASE16));
+        assert_eq!(
+            e,
+            DecodeError::InvalidLastCharForPadding {
+                char: 'D',
+                pads: 4,
+                idx: 3
+            }
+        );
     }
 
     #[test]
-    fn err_utf8_error() {
+    fn utf8_error() {
         let input = "1239";
 
         let Err(DecodeError::Utf8Error(e)) = Decoder::decode(input, BASE64).unwrap().into_utf8()
@@ -934,19 +970,5 @@ mod test_errors {
         assert!(core::any::type_name_of_val(&e).ends_with("Utf8Error"));
 
         assert_eq!(e.error_len(), Some(1));
-    }
-
-    #[test]
-    fn err_encoding_base_is_excluded() {
-        // let input = "ABC=====";
-        // panic!("{:?}", Decoder::deduce_exclude(input, &[BASE32, BASE32HEX]));
-        // let Err(e) = Decoder::deduce_exclude(input, &[BASE32]) else {
-        //     unreachable!("input string is not proper base64 encoded, so how did it pass")
-        // };
-        //
-        // assert_eq!(
-        //     discriminant(&e),
-        //     discriminant(&DecodeError::BadEncodedString)
-        // );
     }
 }

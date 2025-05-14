@@ -32,6 +32,7 @@ mod encoder {
 }
 
 mod decoder {
+    use makura::BASE45;
     use makura::Bases;
     use makura::Decoder;
 
@@ -41,7 +42,10 @@ mod decoder {
         let input = "ietf!";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE45)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }

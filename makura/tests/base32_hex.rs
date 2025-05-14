@@ -88,7 +88,10 @@ mod decoder {
         let output = "CPNMU===";
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE32HEX)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }
@@ -128,7 +131,10 @@ mod decoder {
         // -> BASE45 // wrong
 
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE32HEX)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }

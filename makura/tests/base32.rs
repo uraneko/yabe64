@@ -115,7 +115,10 @@ mod decoder {
         let input = "foob";
         let output = "MZXW6YQ=";
         assert_eq!(
-            Decoder::decode_deduce(output).unwrap().into_utf8().unwrap(),
+            Decoder::decode(output, BASE32)
+                .unwrap()
+                .into_utf8()
+                .unwrap(),
             input
         );
     }
@@ -124,7 +127,7 @@ mod decoder {
     fn test5() {
         let input = "fooba";
         let output = "MZXW6YTB";
-        println!("{}", Bases::default().deduce_encoding(output).unwrap());
+        println!("{}", Bases::default().deduce_sorted(output).unwrap());
         assert_eq!(
             Decoder::decode(output, BASE32)
                 .unwrap()

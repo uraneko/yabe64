@@ -16,7 +16,7 @@ use base45::base45_encode;
 use base64::base64_encode;
 use base64::base64_url_encode;
 
-/// exposes feature enabled bases encoding
+/// exposes feature enabled base encodings
 pub struct Encoder {
     base: Base,
 }
@@ -69,7 +69,7 @@ impl Encoder {
     ///
     /// This method always returns a string,
     /// passing an empty string results in a an empty `String` return value
-    pub fn encode(&self, value: impl AsRef<str>) -> String {
+    pub fn encode<T: AsRef<str>>(&self, value: T) -> String {
         match self.base {
             Base::_64 => base64_encode(value),
             Base::_64URL => base64_url_encode(value),
